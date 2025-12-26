@@ -1,0 +1,281 @@
+-- 🔥 ULTIMATE REMOTE SPY - MOBILE EDITION 🔥
+-- Support Tactile, Draggable, Minimize Button, Responsive UI
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+
+-- Variables globales
+local remoteLog = {}
+local selectedRemote = nil
+local isCapturing = true
+local blockedRemotes = {}
+local repeatFiring = {}
+local isMinimized = false
+
+-- Fonctions utilitaires
+local function deepCopy(original)
+    if type(original) ~= 'table' then return original end
+    local copy = {}
+    for k, v in next, original, nil do copy[deepCopy(k)] = deepCopy(v) end
+    return copy
+end
+
+local function safeStringify(value, depth)
+    depth = depth or 0
+    if depth > 2 then return "..." end
+    local t = typeof(value)
+    if t == "table" then
+        local s = "{ "
+        pcall(function()
+            local c = 0
+            for k, v in pairs(value) do
+                c = c + 1 if c > 5 then s = s .. "... " break end
+                s = s .. tostring(k) .. " = " .. safeStringify(v, depth + 1) .. ", "
+            end
+        end)
+        return s .. "}"
+    elseif t == "Instance" then
+        local ok, name = pcall(function() return value:GetFullName() end)
+        return ok and name or "Instance"
+    else return tostring(value) end
+end
+
+-- UI Creation
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MobileRemoteSpy"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = CoreGui
+
+-- Minimize Button (Floating)
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 50, 0, 50)
+MinBtn.Position = UDim2.new(0, 10, 0, 10)
+MinBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 150)
+MinBtn.Text = "📡"
+MinBtn.TextSize = 25
+MinBtn.Visible = false
+MinBtn.Parent = ScreenGui
+local MinCorner = Instance.new("UICorner")
+MinCorner.CornerRadius = UDim.new(1, 0)
+MinCorner.Parent = MinBtn
+
+-- Main Frame (Smaller for Mobile)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 350, 0, 450) -- Taille adaptée mobile
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -225)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 15)
+MainCorner.Parent = MainFrame
+
+-- Header
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 50)
+Header.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+Header.BorderSizePixel = 0
+Header.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -100, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "⚡ REMOTE SPY"
+Title.TextColor3 = Color3.fromRGB(255, 50, 150)
+Title.TextSize = 18
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = Header
+
+-- Minimize Action
+local function toggleMinimize()
+    isMinimized = not isMinimized
+    MainFrame.Visible = not isMinimized
+    MinBtn.Visible = isMinimized
+end
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -42, 0, 7)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+CloseBtn.Parent = Header
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+local HideBtn = Instance.new("TextButton")
+HideBtn.Size = UDim2.new(0, 35, 0, 35)
+HideBtn.Position = UDim2.new(1, -82, 0, 7)
+HideBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 255)
+HideBtn.Text = "—"
+HideBtn.TextColor3 = Color3.new(1, 1, 1)
+HideBtn.Parent = Header
+local HideCorner = Instance.new("UICorner")
+HideCorner.CornerRadius = UDim.new(0, 8)
+HideCorner.Parent = HideBtn
+
+-- Content
+local ListFrame = Instance.new("ScrollingFrame")
+ListFrame.Size = UDim2.new(1, -20, 0, 200)
+ListFrame.Position = UDim2.new(0, 10, 0, 60)
+ListFrame.BackgroundTransparency = 1
+ListFrame.ScrollBarThickness = 4
+ListFrame.Parent = MainFrame
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Padding = UDim.new(0, 5)
+ListLayout.Parent = ListFrame
+
+local DetailsFrame = Instance.new("ScrollingFrame")
+DetailsFrame.Size = UDim2.new(1, -20, 0, 130)
+DetailsFrame.Position = UDim2.new(0, 10, 0, 270)
+DetailsFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+DetailsFrame.ScrollBarThickness = 4
+DetailsFrame.Parent = MainFrame
+local DetailsCorner = Instance.new("UICorner")
+DetailsCorner.CornerRadius = UDim.new(0, 10)
+DetailsCorner.Parent = DetailsFrame
+
+local DetailsText = Instance.new("TextLabel")
+DetailsText.Size = UDim2.new(1, -10, 1, 0)
+DetailsText.Position = UDim2.new(0, 5, 0, 5)
+DetailsText.BackgroundTransparency = 1
+DetailsText.Text = "Select a remote..."
+DetailsText.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+DetailsText.TextSize = 12
+DetailsText.Font = Enum.Font.Code
+DetailsText.TextWrapped = true
+DetailsText.TextXAlignment = Enum.TextXAlignment.Left
+DetailsText.TextYAlignment = Enum.TextYAlignment.Top
+DetailsText.Parent = DetailsFrame
+
+-- Controls
+local Controls = Instance.new("Frame")
+Controls.Size = UDim2.new(1, -20, 0, 40)
+Controls.Position = UDim2.new(0, 10, 0, 405)
+Controls.BackgroundTransparency = 1
+Controls.Parent = MainFrame
+
+local function createBtn(text, size, pos, color)
+    local b = Instance.new("TextButton")
+    b.Size = size
+    b.Position = pos
+    b.BackgroundColor3 = color
+    b.Text = text
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.TextSize = 12
+    b.Font = Enum.Font.GothamBold
+    b.Parent = Controls
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = b
+    return b
+end
+
+local CapBtn = createBtn("🔴 SPY", UDim2.new(0.3, 0, 1, 0), UDim2.new(0, 0, 0, 0), Color3.fromRGB(60, 220, 120))
+local ClrBtn = createBtn("🗑️ CLR", UDim2.new(0.3, 0, 1, 0), UDim2.new(0.35, 0, 0, 0), Color3.fromRGB(220, 60, 60))
+local FireBtn = createBtn("🚀 FIRE", UDim2.new(0.3, 0, 1, 0), UDim2.new(0.7, 0, 0, 0), Color3.fromRGB(100, 150, 255))
+
+-- Functions
+local function addRemote(name, type, args, path, obj)
+    local entry = {name = name, type = type, args = deepCopy(args), path = path, object = obj}
+    table.insert(remoteLog, 1, entry)
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    btn.Text = " " .. (type == "Event" and "🔹" or "🔸") .. " " .. name
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.TextSize = 12
+    btn.Font = Enum.Font.Gotham
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Parent = ListFrame
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = btn
+    
+    btn.MouseButton1Click:Connect(function()
+        selectedRemote = entry
+        local argStr = ""
+        for i, v in ipairs(args) do argStr = argStr .. string.format("[%d]: %s\n", i, safeStringify(v)) end
+        DetailsText.Text = string.format("NAME: %s\nTYPE: %s\nPATH: %s\n\nARGS:\n%s", name, type, path, argStr)
+        DetailsFrame.CanvasSize = UDim2.new(0, 0, 0, DetailsText.TextBounds.Y + 10)
+    end)
+    
+    ListFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
+end
+
+-- Hook
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    if (method == "FireServer" or method == "InvokeServer") and isCapturing and not checkcaller() then
+        local path = self:GetFullName()
+        task.spawn(addRemote, self.Name, method == "FireServer" and "Event" or "Function", args, path, self)
+    end
+    return oldNamecall(self, ...)
+end))
+
+-- Mobile Draggable (Touch Support)
+local function makeDraggable(frame, handle)
+    local dragging, dragInput, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
+makeDraggable(MainFrame, Header)
+makeDraggable(MinBtn, MinBtn)
+
+-- Events
+CapBtn.MouseButton1Click:Connect(function()
+    isCapturing = not isCapturing
+    CapBtn.Text = isCapturing and "🔴 SPY" or "⏸️ PAUSE"
+    CapBtn.BackgroundColor3 = isCapturing and Color3.fromRGB(60, 220, 120) or Color3.fromRGB(150, 150, 150)
+end)
+
+ClrBtn.MouseButton1Click:Connect(function()
+    remoteLog = {}
+    for _, v in ipairs(ListFrame:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+    DetailsText.Text = "Select a remote..."
+end)
+
+FireBtn.MouseButton1Click:Connect(function()
+    if selectedRemote and selectedRemote.object then
+        if selectedRemote.type == "Event" then
+            selectedRemote.object:FireServer(unpack(selectedRemote.args))
+        else
+            selectedRemote.object:InvokeServer(unpack(selectedRemote.args))
+        end
+    end
+end)
+
+HideBtn.MouseButton1Click:Connect(toggleMinimize)
+MinBtn.MouseButton1Click:Connect(toggleMinimize)
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+print("📱 MOBILE REMOTE SPY LOADED!")
