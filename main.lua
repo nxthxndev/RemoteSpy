@@ -725,41 +725,39 @@ local oldNamecall
 oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
     local args = {...}
     local method = getnamecallmethod()
-    
-    if method == "FireServer" and self:IsA("RemoteEvent") then
-        local remotePath = self:GetFullName()
-        
-        if blockedRemotes[remotePath] then
-            if logToConsole then
-                print("🚫 [BLOCKED]", remotePath, "Args:", ...)
+
+    if (method == "FireServer" and self:IsA("RemoteEvent"))
+    or (method == "InvokeServer" and self:IsA("RemoteFunction")) then
+
+        local remote = self
+        local remoteType = method == "FireServer" and "Event" or "Function"
+
+        task.spawn(function()
+            local remotePath
+            local ok = pcall(function()
+                remotePath = remote:GetFullName()
+            end)
+
+            if not ok then
+                remotePath = remote.Name
             end
-            return
-        end
-        
-        if isCapturing then
-            task.spawn(addRemoteToList, self.Name, "Event", args, remotePath, self)
-            if logToConsole then
-                print("📡 [EVENT]", remotePath, "Args:", ...)
+
+            if blockedRemotes[remotePath] then
+                if logToConsole then
+                    print("🚫 [BLOCKED]", remotePath, "Args:", unpack(args))
+                end
+                return
             end
-        end
-    elseif method == "InvokeServer" and self:IsA("RemoteFunction") then
-        local remotePath = self:GetFullName()
-        
-        if blockedRemotes[remotePath] then
-            if logToConsole then
-                print("🚫 [BLOCKED]", remotePath, "Args:", ...)
+
+            if isCapturing then
+                addRemoteToList(remote.Name, remoteType, args, remotePath, remote)
+                if logToConsole then
+                    print("📡 [" .. remoteType .. "]", remotePath, "Args:", unpack(args))
+                end
             end
-            return
-        end
-        
-        if isCapturing then
-            task.spawn(addRemoteToList, self.Name, "Function", args, remotePath, self)
-            if logToConsole then
-                print("📞 [FUNCTION]", remotePath, "Args:", ...)
-            end
-        end
+        end)
     end
-    
+
     return oldNamecall(self, ...)
 end))
 
