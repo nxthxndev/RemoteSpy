@@ -5,4 +5,4 @@ MOBILE VERSION :
 loadstring(game:HttpGet('https://raw.githubusercontent.com/nxthxndev/RemoteSpy/refs/heads/main/mobile.lua'))()
 
 BETA V2 : 
-loadstring(game:HttpGet('https://raw.githubusercontent.com/nxthxndev/RemoteSpy/refs/heads/main/main.lua'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/nxthxndev/RemoteSpy/refs/heads/main/BetaV2.lua'))()
