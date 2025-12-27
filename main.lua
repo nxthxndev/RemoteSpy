@@ -1,4 +1,4 @@
--- 🔥 ULTIMATE REMOTE CONTROLLER - 100% UNC COMPATIBLE 🔥
+-- 🔥 ULTIMATE REMOTE CONTROLLER - 100% UNC COMPATIBLE (FIXED)
 -- Hook complet, modification d'args, spy avancé, blocage, repeat firing, custom args
 
 local TweenService = game:GetService("TweenService")
@@ -45,11 +45,23 @@ local function safeStringify(value, depth)
         end)
         return s .. "}"
     elseif t == "Instance" then
-        return value:GetFullName()
+        local success, fullname = pcall(function() return value:GetFullName() end)
+        return success and fullname or tostring(value)
     elseif t == "CFrame" or t == "Vector3" or t == "Vector2" then
         return tostring(value)
     else
         return tostring(value)
+    end
+end
+
+local function safeGetFullName(instance)
+    local success, result = pcall(function()
+        return instance:GetFullName()
+    end)
+    if success then
+        return result
+    else
+        return tostring(instance)
     end
 end
 
@@ -128,7 +140,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(0, 300, 0, 20)
 Subtitle.Position = UDim2.new(0, 25, 0, 40)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "100% UNC | Full Control"
+Title.Text = "100% UNC | Full Control"
 Subtitle.TextColor3 = Color3.fromRGB(150, 150, 180)
 Subtitle.TextSize = 12
 Subtitle.Font = Enum.Font.GothamMedium
@@ -720,42 +732,53 @@ local function addRemoteToList(remoteName, remoteType, args, remotePath, remoteO
     updateStats()
 end
 
--- Hook system
+-- Hook system (FIXED - Protection contre les erreurs d'accès)
 local oldNamecall
 oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
     local args = {...}
     local method = getnamecallmethod()
 
-    if (method == "FireServer" and self:IsA("RemoteEvent"))
-    or (method == "InvokeServer" and self:IsA("RemoteFunction")) then
-
-        local remote = self
-        local remoteType = method == "FireServer" and "Event" or "Function"
-
-        task.spawn(function()
-            local remotePath
-            local ok = pcall(function()
-                remotePath = remote:GetFullName()
-            end)
-
-            if not ok then
-                remotePath = remote.Name
-            end
-
-            if blockedRemotes[remotePath] then
-                if logToConsole then
-                    print("🚫 [BLOCKED]", remotePath, "Args:", unpack(args))
-                end
-                return
-            end
-
-            if isCapturing then
-                addRemoteToList(remote.Name, remoteType, args, remotePath, remote)
-                if logToConsole then
-                    print("📡 [" .. remoteType .. "]", remotePath, "Args:", unpack(args))
-                end
+    if (method == "FireServer" or method == "InvokeServer") then
+        local isRemote = false
+        local remoteType = ""
+        
+        pcall(function()
+            if self:IsA("RemoteEvent") then
+                isRemote = true
+                remoteType = "Event"
+            elseif self:IsA("RemoteFunction") then
+                isRemote = true
+                remoteType = "Function"
             end
         end)
+
+        if isRemote then
+            task.spawn(function()
+                local remotePath = safeGetFullName(self)
+                local remoteName = tostring(self)
+                
+                pcall(function()
+                    remoteName = self.Name
+                end)
+
+                if blockedRemotes[remotePath] then
+                    if logToConsole then
+                        print("🚫 [BLOCKED]", remotePath, "Args:", unpack(args))
+                    end
+                    return
+                end
+
+                if isCapturing then
+                    pcall(function()
+                        addRemoteToList(remoteName, remoteType, args, remotePath, self)
+                    end)
+                    
+                    if logToConsole then
+                        print("📡 [" .. remoteType .. "]", remotePath, "Args:", unpack(args))
+                    end
+                end
+            end)
+        end
     end
 
     return oldNamecall(self, ...)
@@ -806,12 +829,6 @@ FireOnceBtn.MouseButton1Click:Connect(function()
     
     local success, result = pcall(function()
         local remote = selectedRemote.object
-        if not remote then
-            for part in string.gmatch(selectedRemote.path, "[^.]+") do
-                remote = (remote or game):FindFirstChild(part)
-                if not remote then break end
-            end
-        end
         
         if remote then
             if selectedRemote.type == "Event" then
@@ -822,7 +839,7 @@ FireOnceBtn.MouseButton1Click:Connect(function()
                 return "✅ Function invoked! Result: " .. tostring(res)
             end
         else
-            return "❌ Remote not found in game!"
+            return "❌ Remote object not available!"
         end
     end)
     
@@ -919,13 +936,17 @@ end)
 ScanBtn.MouseButton1Click:Connect(function()
     local found = 0
     local function scanInstance(instance)
-        for _, child in ipairs(instance:GetDescendants()) do
-            if child:IsA("RemoteEvent") or child:IsA("RemoteFunction") then
-                found = found + 1
-                local type = child:IsA("RemoteEvent") and "Event" or "Function"
-                addRemoteToList(child.Name, type, {}, child:GetFullName(), child)
+        pcall(function()
+            for _, child in ipairs(instance:GetDescendants()) do
+                pcall(function()
+                    if child:IsA("RemoteEvent") or child:IsA("RemoteFunction") then
+                        found = found + 1
+                        local remoteType = child:IsA("RemoteEvent") and "Event" or "Function"
+                        addRemoteToList(child.Name, remoteType, {}, safeGetFullName(child), child)
+                    end
+                end)
             end
-        end
+        end)
     end
     
     scanInstance(game)
