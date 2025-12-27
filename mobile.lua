@@ -1,5 +1,5 @@
--- 🔥 ULTIMATE MOBILE REMOTE SPY - FIXED VERSION
--- Compatible avec tous les exécuteurs mobiles (Arceus X, Fluxus, Delta, etc.)
+-- 🔥 ULTIMATE MOBILE REMOTE SPY - THREAD SAFE VERSION
+-- Compatible avec tous les exécuteurs mobiles (fix erreur Plugin)
 
 -- Protection contre les erreurs
 local function safePcall(func, ...)
@@ -260,35 +260,14 @@ local function formatArgs(args)
     return result
 end
 
-local function addRemoteToList(remoteName, remoteType, args, remotePath)
-    -- Éviter les doublons récents
-    for i = 1, math.min(3, #remoteLog) do
-        if remoteLog[i] and remoteLog[i].path == remotePath and os.time() - remoteLog[i].time < 0.5 then
-            return
-        end
-    end
-    
-    local entry = {
-        name = remoteName,
-        type = remoteType,
-        args = args,
-        path = remotePath,
-        time = os.time()
-    }
-    
-    table.insert(remoteLog, 1, entry)
-    if #remoteLog > 100 then
-        table.remove(remoteLog, #remoteLog)
-    end
-    
-    -- Create UI item
+-- FIX: Créer les éléments UI dans le thread principal
+local function createRemoteItem(remoteName, remoteType, remotePath)
     local Item = Instance.new("TextButton")
     Item.Size = UDim2.new(1, -10, 0, 55)
     Item.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     Item.BorderSizePixel = 0
     Item.Text = ""
     Item.AutoButtonColor = false
-    Item.LayoutOrder = entry.time
     Item.Parent = RemoteList
     
     local ItemCorner = Instance.new("UICorner")
@@ -334,6 +313,36 @@ local function addRemoteToList(remoteName, remoteType, args, remotePath)
     PathLabel.TextTruncate = Enum.TextTruncate.AtEnd
     PathLabel.Parent = Item
     
+    return Item
+end
+
+local function addRemoteToList(remoteName, remoteType, args, remotePath)
+    -- Éviter les doublons récents
+    for i = 1, math.min(3, #remoteLog) do
+        if remoteLog[i] and remoteLog[i].path == remotePath and os.time() - remoteLog[i].time < 0.5 then
+            return
+        end
+    end
+    
+    local entry = {
+        name = remoteName,
+        type = remoteType,
+        args = args,
+        path = remotePath,
+        time = os.time()
+    }
+    
+    table.insert(remoteLog, 1, entry)
+    if #remoteLog > 100 then
+        table.remove(remoteLog, #remoteLog)
+    end
+    
+    -- IMPORTANT: Créer l'UI dans le thread principal avec game:GetService
+    game:GetService("RunService").RenderStepped:Wait()
+    
+    local Item = createRemoteItem(remoteName, remoteType, remotePath)
+    Item.LayoutOrder = -entry.time
+    
     Item.MouseButton1Click:Connect(function()
         selectedEntry = entry
         
@@ -362,7 +371,7 @@ local function addRemoteToList(remoteName, remoteType, args, remotePath)
     updateCounter()
 end
 
--- Hook System (SAFE)
+-- Hook System (SAFE + THREAD FIX)
 if hasHook then
     local success = safePcall(function()
         local oldNamecall
@@ -373,23 +382,32 @@ if hasHook then
             -- Capture remotes
             if (method == "FireServer" or method == "InvokeServer") and not checkCaller() then
                 if isCapturing then
+                    -- Capturer les données SANS créer d'Instance ici
+                    local capturedData = {
+                        self = self,
+                        args = args,
+                        method = method
+                    }
+                    
+                    -- Utiliser RunService pour créer l'UI dans le bon thread
                     task.spawn(function()
                         safePcall(function()
-                            local isRemote = self:IsA("RemoteEvent") or self:IsA("RemoteFunction")
-                            if isRemote then
-                                local remoteType = self:IsA("RemoteEvent") and "Event" or "Function"
-                                local remoteName = self.Name
-                                local remotePath = ""
+                            local remoteType, remoteName, remotePath
+                            
+                            -- Vérifications sécurisées
+                            local isEvent = pcall(function() return self:IsA("RemoteEvent") end) and self:IsA("RemoteEvent")
+                            local isFunction = pcall(function() return self:IsA("RemoteFunction") end) and self:IsA("RemoteFunction")
+                            
+                            if isEvent or isFunction then
+                                remoteType = isEvent and "Event" or "Function"
                                 
-                                safePcall(function()
-                                    remotePath = self:GetFullName()
-                                end)
+                                local nameSuccess, name = pcall(function() return self.Name end)
+                                remoteName = nameSuccess and name or "Unknown"
                                 
-                                if remotePath == "" then
-                                    remotePath = tostring(self)
-                                end
+                                local pathSuccess, path = pcall(function() return self:GetFullName() end)
+                                remotePath = pathSuccess and path or tostring(self)
                                 
-                                addRemoteToList(remoteName, remoteType, args, remotePath)
+                                addRemoteToList(remoteName, remoteType, capturedData.args, remotePath)
                             end
                         end)
                     end)
@@ -484,7 +502,7 @@ makeDraggable(MinButton, MinButton)
 
 -- Success message
 print("✅ Mobile Remote Spy Loaded!")
-print("📱 Optimized for mobile executors")
+print("📱 Thread-safe version")
 print("🔍 Hook status:", hasHook and "Available" or "Not Available")
 
 -- Initial hint
