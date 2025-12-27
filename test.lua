@@ -1,4 +1,3 @@
-
 -- 🔥 ULTIMATE MOBILE REMOTE SPY - PROFESSIONAL EDITION
 -- ✅ Replay fonctionnel avec stockage des remotes
 -- ✅ Interface moderne et clean
@@ -197,10 +196,10 @@ MinShadow.ImageTransparency = 0.7
 MinShadow.ZIndex = 49
 MinShadow.Parent = MinButton
 
--- Frame principale (optimisée mobile)
+-- Frame principale (optimisée mobile - TAILLE RÉDUITE)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 360, 0, 640)
-MainFrame.Position = UDim2.new(0.5, -180, 0.5, -320)
+MainFrame.Size = UDim2.new(0, 340, 0, 520)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -260)
 MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
@@ -216,9 +215,9 @@ MainStroke.Thickness = 2.5
 MainStroke.Transparency = 0
 MainStroke.Parent = MainFrame
 
--- Header moderne
+-- Header moderne (RÉDUIT)
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 60)
+Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
 Header.BorderSizePixel = 0
 Header.Parent = MainFrame
@@ -236,36 +235,36 @@ HeaderGradient.Rotation = 90
 HeaderGradient.Parent = Header
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -120, 0, 30)
-Title.Position = UDim2.new(0, 20, 0, 8)
+Title.Size = UDim2.new(1, -120, 0, 25)
+Title.Position = UDim2.new(0, 15, 0, 5)
 Title.BackgroundTransparency = 1
 Title.Text = "📡 REMOTE SPY"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 20
+Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
 local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(1, -120, 0, 20)
-Subtitle.Position = UDim2.new(0, 20, 0, 38)
+Subtitle.Size = UDim2.new(1, -120, 0, 18)
+Subtitle.Position = UDim2.new(0, 15, 0, 30)
 Subtitle.BackgroundTransparency = 1
 Subtitle.Text = "Professional Edition"
 Subtitle.TextColor3 = Color3.fromRGB(150, 150, 160)
-Subtitle.TextSize = 11
+Subtitle.TextSize = 9
 Subtitle.Font = Enum.Font.Gotham
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
 Subtitle.Parent = Header
 
 local StatusBadge = Instance.new("Frame")
-StatusBadge.Size = UDim2.new(0, 90, 0, 28)
-StatusBadge.Position = UDim2.new(1, -145, 0, 16)
+StatusBadge.Size = UDim2.new(0, 75, 0, 22)
+StatusBadge.Position = UDim2.new(1, -130, 0, 14)
 StatusBadge.BackgroundColor3 = Color3.fromRGB(60, 220, 120)
 StatusBadge.BorderSizePixel = 0
 StatusBadge.Parent = Header
 
 local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 14)
+StatusCorner.CornerRadius = UDim.new(0, 11)
 StatusCorner.Parent = StatusBadge
 
 local StatusLabel = Instance.new("TextLabel")
@@ -273,18 +272,18 @@ StatusLabel.Size = UDim2.new(1, 0, 1, 0)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = "● ACTIVE"
 StatusLabel.TextColor3 = Color3.new(1, 1, 1)
-StatusLabel.TextSize = 12
+StatusLabel.TextSize = 10
 StatusLabel.Font = Enum.Font.GothamBold
 StatusLabel.Parent = StatusBadge
 
 local HideBtn = Instance.new("TextButton")
-HideBtn.Size = UDim2.new(0, 45, 0, 45)
-HideBtn.Position = UDim2.new(1, -52, 0, 8)
+HideBtn.Size = UDim2.new(0, 38, 0, 38)
+HideBtn.Position = UDim2.new(1, -44, 0, 6)
 HideBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 HideBtn.BorderSizePixel = 0
 HideBtn.Text = "─"
 HideBtn.TextColor3 = Color3.new(1, 1, 1)
-HideBtn.TextSize = 20
+HideBtn.TextSize = 18
 HideBtn.Font = Enum.Font.GothamBold
 HideBtn.Parent = Header
 
@@ -292,86 +291,86 @@ local HideCorner = Instance.new("UICorner")
 HideCorner.CornerRadius = UDim.new(0, 10)
 HideCorner.Parent = HideBtn
 
--- Compteur moderne
+-- Compteur moderne (COMPACT)
 local CounterFrame = Instance.new("Frame")
-CounterFrame.Size = UDim2.new(1, -20, 0, 45)
-CounterFrame.Position = UDim2.new(0, 10, 0, 70)
+CounterFrame.Size = UDim2.new(1, -20, 0, 35)
+CounterFrame.Position = UDim2.new(0, 10, 0, 58)
 CounterFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
 CounterFrame.BorderSizePixel = 0
 CounterFrame.Parent = MainFrame
 
 local CounterCorner = Instance.new("UICorner")
-CounterCorner.CornerRadius = UDim.new(0, 12)
+CounterCorner.CornerRadius = UDim.new(0, 10)
 CounterCorner.Parent = CounterFrame
 
 local CounterIcon = Instance.new("TextLabel")
-CounterIcon.Size = UDim2.new(0, 40, 1, 0)
+CounterIcon.Size = UDim2.new(0, 35, 1, 0)
 CounterIcon.BackgroundTransparency = 1
 CounterIcon.Text = "📊"
-CounterIcon.TextSize = 20
+CounterIcon.TextSize = 16
 CounterIcon.Parent = CounterFrame
 
 local CounterLabel = Instance.new("TextLabel")
-CounterLabel.Size = UDim2.new(1, -50, 1, 0)
-CounterLabel.Position = UDim2.new(0, 45, 0, 0)
+CounterLabel.Size = UDim2.new(1, -40, 1, 0)
+CounterLabel.Position = UDim2.new(0, 38, 0, 0)
 CounterLabel.BackgroundTransparency = 1
 CounterLabel.Text = "0 Remotes Captured"
 CounterLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
-CounterLabel.TextSize = 16
+CounterLabel.TextSize = 13
 CounterLabel.Font = Enum.Font.GothamBold
 CounterLabel.TextXAlignment = Enum.TextXAlignment.Left
 CounterLabel.Parent = CounterFrame
 
--- Barre de recherche moderne
+-- Barre de recherche moderne (COMPACT)
 local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -20, 0, 45)
-SearchFrame.Position = UDim2.new(0, 10, 0, 125)
+SearchFrame.Size = UDim2.new(1, -20, 0, 35)
+SearchFrame.Position = UDim2.new(0, 10, 0, 100)
 SearchFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
 SearchFrame.BorderSizePixel = 0
 SearchFrame.Parent = MainFrame
 
 local SearchCorner = Instance.new("UICorner")
-SearchCorner.CornerRadius = UDim.new(0, 12)
+SearchCorner.CornerRadius = UDim.new(0, 10)
 SearchCorner.Parent = SearchFrame
 
 local SearchIcon = Instance.new("TextLabel")
-SearchIcon.Size = UDim2.new(0, 40, 1, 0)
+SearchIcon.Size = UDim2.new(0, 35, 1, 0)
 SearchIcon.BackgroundTransparency = 1
 SearchIcon.Text = "🔍"
-SearchIcon.TextSize = 18
+SearchIcon.TextSize = 14
 SearchIcon.Parent = SearchFrame
 
 local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -110, 1, -10)
-SearchBox.Position = UDim2.new(0, 45, 0, 5)
+SearchBox.Size = UDim2.new(1, -100, 1, -8)
+SearchBox.Position = UDim2.new(0, 38, 0, 4)
 SearchBox.BackgroundTransparency = 1
 SearchBox.PlaceholderText = "Search remotes..."
 SearchBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.new(1, 1, 1)
-SearchBox.TextSize = 13
+SearchBox.TextSize = 11
 SearchBox.Font = Enum.Font.Gotham
 SearchBox.TextXAlignment = Enum.TextXAlignment.Left
 SearchBox.ClearTextOnFocus = false
 SearchBox.Parent = SearchFrame
 
 local ClearSearchBtn = Instance.new("TextButton")
-ClearSearchBtn.Size = UDim2.new(0, 30, 0, 30)
-ClearSearchBtn.Position = UDim2.new(1, -38, 0.5, -15)
+ClearSearchBtn.Size = UDim2.new(0, 25, 0, 25)
+ClearSearchBtn.Position = UDim2.new(1, -32, 0.5, -12.5)
 ClearSearchBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
 ClearSearchBtn.BackgroundTransparency = 1
 ClearSearchBtn.BorderSizePixel = 0
 ClearSearchBtn.Text = "✕"
 ClearSearchBtn.TextColor3 = Color3.fromRGB(200, 60, 60)
-ClearSearchBtn.TextSize = 16
+ClearSearchBtn.TextSize = 14
 ClearSearchBtn.Font = Enum.Font.GothamBold
 ClearSearchBtn.Visible = false
 ClearSearchBtn.Parent = SearchFrame
 
--- Filtres modernes
+-- Filtres modernes (COMPACT)
 local FilterContainer = Instance.new("Frame")
-FilterContainer.Size = UDim2.new(1, -20, 0, 40)
-FilterContainer.Position = UDim2.new(0, 10, 0, 180)
+FilterContainer.Size = UDim2.new(1, -20, 0, 32)
+FilterContainer.Position = UDim2.new(0, 10, 0, 142)
 FilterContainer.BackgroundTransparency = 1
 FilterContainer.Parent = MainFrame
 
@@ -398,10 +397,10 @@ local FilterAllBtn = createFilterButton("ALL", UDim2.new(0, 0, 0, 0), true)
 local FilterEventBtn = createFilterButton("EVENTS", UDim2.new(0.345, 0, 0, 0), false)
 local FilterFuncBtn = createFilterButton("FUNCTIONS", UDim2.new(0.69, 0, 0, 0), false)
 
--- Liste de remotes (scroll optimisé)
+-- Liste de remotes (scroll optimisé - COMPACT)
 local RemoteList = Instance.new("ScrollingFrame")
-RemoteList.Size = UDim2.new(1, -20, 0, 260)
-RemoteList.Position = UDim2.new(0, 10, 0, 230)
+RemoteList.Size = UDim2.new(1, -20, 0, 200)
+RemoteList.Position = UDim2.new(0, 10, 0, 182)
 RemoteList.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 RemoteList.BorderSizePixel = 0
 RemoteList.ScrollBarThickness = 4
@@ -420,10 +419,10 @@ ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 ListLayout.Parent = RemoteList
 
--- Panel de détails moderne
+-- Panel de détails moderne (COMPACT)
 local DetailsPanel = Instance.new("ScrollingFrame")
-DetailsPanel.Size = UDim2.new(1, -20, 0, 140)
-DetailsPanel.Position = UDim2.new(0, 10, 0, 500)
+DetailsPanel.Size = UDim2.new(1, -20, 0, 100)
+DetailsPanel.Position = UDim2.new(0, 10, 0, 390)
 DetailsPanel.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
 DetailsPanel.BorderSizePixel = 0
 DetailsPanel.ScrollBarThickness = 4
@@ -439,25 +438,25 @@ local DetailsText = Instance.new("TextLabel")
 DetailsText.Size = UDim2.new(1, -20, 1, 0)
 DetailsText.Position = UDim2.new(0, 10, 0, 10)
 DetailsText.BackgroundTransparency = 1
-DetailsText.Text = "💡 Select a remote to view details...\n\n🎯 Click on any remote\n▶️  Replay button to fire it again\n✏️  Edit arguments before replaying"
+DetailsText.Text = "💡 Select a remote\n▶️ Replay | ✏️ Edit"
 DetailsText.TextColor3 = Color3.fromRGB(160, 160, 180)
-DetailsText.TextSize = 12
+DetailsText.TextSize = 10
 DetailsText.Font = Enum.Font.Code
 DetailsText.TextWrapped = true
 DetailsText.TextXAlignment = Enum.TextXAlignment.Left
 DetailsText.TextYAlignment = Enum.TextYAlignment.Top
 DetailsText.Parent = DetailsPanel
 
--- Boutons d'action
+-- Boutons d'action (COMPACT)
 local ActionContainer = Instance.new("Frame")
-ActionContainer.Size = UDim2.new(1, -20, 0, 85)
-ActionContainer.Position = UDim2.new(0, 10, 0, 650)
+ActionContainer.Size = UDim2.new(1, -20, 0, 70)
+ActionContainer.Position = UDim2.new(0, 10, 0, 498)
 ActionContainer.BackgroundTransparency = 1
 ActionContainer.Parent = MainFrame
 
 local function createActionButton(text, emoji, position, color)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.48, 0, 0, 38)
+    btn.Size = UDim2.new(0.48, 0, 0, 32)
     btn.Position = position
     btn.BackgroundColor3 = color
     btn.BorderSizePixel = 0
@@ -467,24 +466,24 @@ local function createActionButton(text, emoji, position, color)
     btn.Parent = ActionContainer
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = btn
     
     local emojiLabel = Instance.new("TextLabel")
-    emojiLabel.Size = UDim2.new(0, 30, 1, 0)
-    emojiLabel.Position = UDim2.new(0, 10, 0, 0)
+    emojiLabel.Size = UDim2.new(0, 25, 1, 0)
+    emojiLabel.Position = UDim2.new(0, 8, 0, 0)
     emojiLabel.BackgroundTransparency = 1
     emojiLabel.Text = emoji
-    emojiLabel.TextSize = 18
+    emojiLabel.TextSize = 14
     emojiLabel.Parent = btn
     
     local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, -45, 1, 0)
-    textLabel.Position = UDim2.new(0, 40, 0, 0)
+    textLabel.Size = UDim2.new(1, -38, 1, 0)
+    textLabel.Position = UDim2.new(0, 33, 0, 0)
     textLabel.BackgroundTransparency = 1
     textLabel.Text = text
     textLabel.TextColor3 = Color3.new(1, 1, 1)
-    textLabel.TextSize = 13
+    textLabel.TextSize = 11
     textLabel.Font = Enum.Font.GothamBold
     textLabel.TextXAlignment = Enum.TextXAlignment.Left
     textLabel.Parent = btn
@@ -494,8 +493,8 @@ end
 
 local ReplayBtn = createActionButton("REPLAY", "▶️", UDim2.new(0, 0, 0, 0), Color3.fromRGB(100, 150, 255))
 local EditBtn = createActionButton("EDIT", "✏️", UDim2.new(0.52, 0, 0, 0), Color3.fromRGB(255, 180, 50))
-local CaptureBtn = createActionButton("PAUSE", "⏸️", UDim2.new(0, 0, 0, 46), Color3.fromRGB(60, 200, 120))
-local ClearBtn = createActionButton("CLEAR", "🗑️", UDim2.new(0.52, 0, 0, 46), Color3.fromRGB(220, 70, 70))
+local CaptureBtn = createActionButton("PAUSE", "⏸️", UDim2.new(0, 0, 0, 38), Color3.fromRGB(60, 200, 120))
+local ClearBtn = createActionButton("CLEAR", "🗑️", UDim2.new(0.52, 0, 0, 38), Color3.fromRGB(220, 70, 70))
 
 -- Modal Edit (moderne)
 local EditModal = Instance.new("Frame")
@@ -718,10 +717,10 @@ local function refreshList()
     end
 end
 
--- Créer UI item moderne
+-- Créer UI item moderne (COMPACT)
 function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     local Item = Instance.new("Frame")
-    Item.Size = UDim2.new(1, -10, 0, 80)
+    Item.Size = UDim2.new(1, -10, 0, 65)
     Item.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
     Item.BorderSizePixel = 0
     Item.LayoutOrder = -math.floor(entry.time * 100)
@@ -758,35 +757,35 @@ function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     ClickBtn.Parent = Item
     
     local FavIcon = Instance.new("TextLabel")
-    FavIcon.Size = UDim2.new(0, 25, 0, 25)
-    FavIcon.Position = UDim2.new(0, 10, 0, 8)
+    FavIcon.Size = UDim2.new(0, 20, 0, 20)
+    FavIcon.Position = UDim2.new(0, 8, 0, 6)
     FavIcon.BackgroundTransparency = 1
     FavIcon.Text = favorites[remotePath] and "⭐" or "☆"
     FavIcon.TextColor3 = favorites[remotePath] and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(100, 100, 120)
-    FavIcon.TextSize = 16
+    FavIcon.TextSize = 13
     FavIcon.Parent = Item
     
     local NameLabel = Instance.new("TextLabel")
-    NameLabel.Size = UDim2.new(1, -140, 0, 24)
-    NameLabel.Position = UDim2.new(0, 40, 0, 10)
+    NameLabel.Size = UDim2.new(1, -120, 0, 20)
+    NameLabel.Position = UDim2.new(0, 32, 0, 8)
     NameLabel.BackgroundTransparency = 1
     NameLabel.Text = remoteName
     NameLabel.TextColor3 = Color3.new(1, 1, 1)
-    NameLabel.TextSize = 14
+    NameLabel.TextSize = 12
     NameLabel.Font = Enum.Font.GothamBold
     NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     NameLabel.TextTruncate = Enum.TextTruncate.AtEnd
     NameLabel.Parent = Item
     
     local TypeBadge = Instance.new("Frame")
-    TypeBadge.Size = UDim2.new(0, 65, 0, 24)
-    TypeBadge.Position = UDim2.new(1, -75, 0, 10)
+    TypeBadge.Size = UDim2.new(0, 55, 0, 20)
+    TypeBadge.Position = UDim2.new(1, -62, 0, 8)
     TypeBadge.BackgroundColor3 = remoteType == "Event" and Color3.fromRGB(70, 130, 255) or Color3.fromRGB(255, 140, 70)
     TypeBadge.BorderSizePixel = 0
     TypeBadge.Parent = Item
     
     local TypeCorner = Instance.new("UICorner")
-    TypeCorner.CornerRadius = UDim.new(0, 6)
+    TypeCorner.CornerRadius = UDim.new(0, 5)
     TypeCorner.Parent = TypeBadge
     
     local TypeLabel = Instance.new("TextLabel")
@@ -794,58 +793,58 @@ function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     TypeLabel.BackgroundTransparency = 1
     TypeLabel.Text = remoteType == "Event" and "EVENT" or "FUNC"
     TypeLabel.TextColor3 = Color3.new(1, 1, 1)
-    TypeLabel.TextSize = 10
+    TypeLabel.TextSize = 9
     TypeLabel.Font = Enum.Font.GothamBold
     TypeLabel.Parent = TypeBadge
     
     local PathLabel = Instance.new("TextLabel")
-    PathLabel.Size = UDim2.new(1, -50, 0, 16)
-    PathLabel.Position = UDim2.new(0, 40, 0, 36)
+    PathLabel.Size = UDim2.new(1, -45, 0, 14)
+    PathLabel.Position = UDim2.new(0, 32, 0, 29)
     PathLabel.BackgroundTransparency = 1
     PathLabel.Text = "📍 " .. remotePath
     PathLabel.TextColor3 = Color3.fromRGB(130, 130, 150)
-    PathLabel.TextSize = 9
+    PathLabel.TextSize = 8
     PathLabel.Font = Enum.Font.Gotham
     PathLabel.TextXAlignment = Enum.TextXAlignment.Left
     PathLabel.TextTruncate = Enum.TextTruncate.AtEnd
     PathLabel.Parent = Item
     
     local TimeLabel = Instance.new("TextLabel")
-    TimeLabel.Size = UDim2.new(0, 100, 0, 16)
-    TimeLabel.Position = UDim2.new(0, 40, 0, 54)
+    TimeLabel.Size = UDim2.new(0, 80, 0, 14)
+    TimeLabel.Position = UDim2.new(0, 32, 0, 45)
     TimeLabel.BackgroundTransparency = 1
     TimeLabel.Text = "🕐 " .. os.date("%H:%M:%S", entry.time)
     TimeLabel.TextColor3 = Color3.fromRGB(110, 110, 130)
-    TimeLabel.TextSize = 9
+    TimeLabel.TextSize = 8
     TimeLabel.Font = Enum.Font.Gotham
     TimeLabel.TextXAlignment = Enum.TextXAlignment.Left
     TimeLabel.Parent = Item
     
     local ArgsCount = Instance.new("TextLabel")
-    ArgsCount.Size = UDim2.new(0, 80, 0, 16)
-    ArgsCount.Position = UDim2.new(0, 145, 0, 54)
+    ArgsCount.Size = UDim2.new(0, 70, 0, 14)
+    ArgsCount.Position = UDim2.new(0, 115, 0, 45)
     ArgsCount.BackgroundTransparency = 1
     ArgsCount.Text = "📦 " .. #entry.args .. " args"
     ArgsCount.TextColor3 = Color3.fromRGB(110, 110, 130)
-    ArgsCount.TextSize = 9
+    ArgsCount.TextSize = 8
     ArgsCount.Font = Enum.Font.Gotham
     ArgsCount.TextXAlignment = Enum.TextXAlignment.Left
     ArgsCount.Parent = Item
     
     local ReplayQuickBtn = Instance.new("TextButton")
-    ReplayQuickBtn.Size = UDim2.new(0, 32, 0, 32)
-    ReplayQuickBtn.Position = UDim2.new(1, -40, 0.5, -16)
+    ReplayQuickBtn.Size = UDim2.new(0, 28, 0, 28)
+    ReplayQuickBtn.Position = UDim2.new(1, -35, 0.5, -14)
     ReplayQuickBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
     ReplayQuickBtn.BorderSizePixel = 0
     ReplayQuickBtn.Text = "▶"
     ReplayQuickBtn.TextColor3 = Color3.new(1, 1, 1)
-    ReplayQuickBtn.TextSize = 14
+    ReplayQuickBtn.TextSize = 12
     ReplayQuickBtn.Font = Enum.Font.GothamBold
     ReplayQuickBtn.ZIndex = 2
     ReplayQuickBtn.Parent = Item
     
     local ReplayCorner = Instance.new("UICorner")
-    ReplayCorner.CornerRadius = UDim.new(0, 8)
+    ReplayCorner.CornerRadius = UDim.new(0, 7)
     ReplayCorner.Parent = ReplayQuickBtn
     
     -- Events
@@ -1128,20 +1127,20 @@ end
 makeDraggable(MainFrame, Header)
 makeDraggable(MinButton, MinButton)
 
--- Export si disponible
+-- Export si disponible (POSITION AJUSTÉE)
 if setclipboard then
     local ExportBtn = Instance.new("TextButton")
-    ExportBtn.Size = UDim2.new(0, 35, 0, 35)
-    ExportBtn.Position = UDim2.new(1, -90, 0, 10)
+    ExportBtn.Size = UDim2.new(0, 30, 0, 30)
+    ExportBtn.Position = UDim2.new(1, -78, 0, 10)
     ExportBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 255)
     ExportBtn.BorderSizePixel = 0
     ExportBtn.Text = "📋"
-    ExportBtn.TextSize = 16
+    ExportBtn.TextSize = 13
     ExportBtn.Font = Enum.Font.GothamBold
     ExportBtn.Parent = Header
     
     local ExportCorner = Instance.new("UICorner")
-    ExportCorner.CornerRadius = UDim.new(0, 8)
+    ExportCorner.CornerRadius = UDim.new(0, 7)
     ExportCorner.Parent = ExportBtn
     
     ExportBtn.MouseButton1Click:Connect(function()
