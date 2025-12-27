@@ -1,5 +1,5 @@
--- 🔥 ULTIMATE MOBILE REMOTE SPY - RESTORED & FIXED
--- Version complète avec design original + correctif "Capability Plugin"
+-- 🔥 ULTIMATE MOBILE REMOTE SPY - ZERO THREAD ERRORS
+-- Fix complet pour l'erreur Plugin/Instance & Game Blocking
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -23,6 +23,8 @@ local remoteLog = {}
 local isCapturing = true
 local selectedEntry = nil
 local isMinimized = false
+
+-- IMPORTANT: File d'attente pour créer les UI dans le thread principal
 local uiQueue = {}
 
 -- Fonction utilitaire
@@ -34,10 +36,7 @@ local function safeStringify(value)
     elseif t == "table" then
         local str = "{"
         pcall(function()
-            local count = 0
             for k, v in pairs(value) do
-                count = count + 1
-                if count > 15 then str = str .. "..." break end
                 str = str .. tostring(k) .. "=" .. tostring(v) .. ", "
             end
         end)
@@ -47,7 +46,7 @@ local function safeStringify(value)
     end
 end
 
--- === UI CREATION (DESIGN ORIGINAL RESTAURÉ) ===
+-- === UI CREATION (THREAD PRINCIPAL) ===
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MobileRemoteSpy_" .. math.random(1000, 9999)
 ScreenGui.ResetOnSpawn = false
@@ -236,8 +235,8 @@ local function formatArgs(args)
     return result
 end
 
-local function createRemoteItemUI(data)
-    local entry = data.entry
+-- Créer UI item (SEULEMENT appelé depuis le thread principal)
+local function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     local Item = Instance.new("TextButton")
     Item.Size = UDim2.new(1, -10, 0, 55)
     Item.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
@@ -255,7 +254,7 @@ local function createRemoteItemUI(data)
     NameLabel.Size = UDim2.new(1, -70, 0, 22)
     NameLabel.Position = UDim2.new(0, 10, 0, 8)
     NameLabel.BackgroundTransparency = 1
-    NameLabel.Text = "🔹 " .. data.name
+    NameLabel.Text = "🔹 " .. remoteName
     NameLabel.TextColor3 = Color3.new(1, 1, 1)
     NameLabel.TextSize = 13
     NameLabel.Font = Enum.Font.GothamBold
@@ -266,8 +265,8 @@ local function createRemoteItemUI(data)
     local TypeBadge = Instance.new("TextLabel")
     TypeBadge.Size = UDim2.new(0, 55, 0, 20)
     TypeBadge.Position = UDim2.new(1, -60, 0, 8)
-    TypeBadge.BackgroundColor3 = data.type == "Event" and Color3.fromRGB(50, 120, 255) or Color3.fromRGB(255, 120, 50)
-    TypeBadge.Text = data.type:sub(1, 3):upper()
+    TypeBadge.BackgroundColor3 = remoteType == "Event" and Color3.fromRGB(50, 120, 255) or Color3.fromRGB(255, 120, 50)
+    TypeBadge.Text = remoteType:sub(1, 3):upper()
     TypeBadge.TextColor3 = Color3.new(1, 1, 1)
     TypeBadge.TextSize = 10
     TypeBadge.Font = Enum.Font.GothamBold
@@ -282,7 +281,7 @@ local function createRemoteItemUI(data)
     PathLabel.Size = UDim2.new(1, -20, 0, 18)
     PathLabel.Position = UDim2.new(0, 10, 0, 32)
     PathLabel.BackgroundTransparency = 1
-    PathLabel.Text = data.path
+    PathLabel.Text = remotePath
     PathLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
     PathLabel.TextSize = 9
     PathLabel.Font = Enum.Font.Gotham
@@ -299,51 +298,78 @@ local function createRemoteItemUI(data)
         end
         Item.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
         
-        DetailsText.Text = string.format(
+        local details = string.format(
             "Name: %s\nType: %s\nPath: %s\nTime: %s\n\nArguments:\n%s",
-            data.name, data.type, data.path,
+            entry.name, entry.type, entry.path,
             os.date("%H:%M:%S", entry.time),
             formatArgs(entry.args)
         )
+        DetailsText.Text = details
         DetailsPanel.CanvasSize = UDim2.new(0, 0, 0, DetailsText.TextBounds.Y + 20)
     end)
     
     RemoteList.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
 end
 
--- Processeur de file
+-- Ajouter à la file (appelé depuis le hook)
+local function queueRemoteCapture(remoteName, remoteType, args, remotePath)
+    for i = 1, math.min(3, #remoteLog) do
+        if remoteLog[i] and remoteLog[i].path == remotePath and tick() - remoteLog[i].time < 0.1 then
+            return
+        end
+    end
+    
+    local entry = {
+        name = remoteName,
+        type = remoteType,
+        args = args,
+        path = remotePath,
+        time = tick()
+    }
+    
+    table.insert(remoteLog, 1, entry)
+    if #remoteLog > 100 then
+        table.remove(remoteLog, #remoteLog)
+    end
+    
+    table.insert(uiQueue, {remoteName, remoteType, remotePath, entry})
+    updateCounter()
+end
+
+-- Processeur de file (THREAD PRINCIPAL)
 RunService.Heartbeat:Connect(function()
     if #uiQueue > 0 then
         local data = table.remove(uiQueue, 1)
-        pcall(createRemoteItemUI, data)
+        pcall(createRemoteItemUI, data[1], data[2], data[3], data[4])
     end
 end)
 
--- === LE HOOK (CORRECTIF CAPABILITY) ===
+-- === HOOK (FIXÉ) ===
 if hasHook then
     local oldNamecall
     oldNamecall = hookmetamethod(game, "__namecall", newCC(function(self, ...)
         local method = getNamecall()
+        local args = {...}
         
-        if isCapturing and not checkCaller() and (method == "FireServer" or method == "InvokeServer") then
-            -- EXTRACTION SYNCHRONE (Évite l'erreur Plugin Capability)
-            local rName = tostring(self.Name)
-            local rType = self:IsA("RemoteEvent") and "Event" or "Function"
-            local rPath = ""
-            local s, p = pcall(function() return self:GetFullName() end)
-            rPath = s and p or rName
-            
-            local args = {...}
-            local entry = {args = args, time = tick()}
-            
-            table.insert(remoteLog, 1, entry)
-            if #remoteLog > 100 then table.remove(remoteLog, #remoteLog) end
-            
-            table.insert(uiQueue, {name = rName, type = rType, path = rPath, entry = entry})
-            updateCounter()
+        if (method == "FireServer" or method == "InvokeServer") and not checkCaller() and isCapturing then
+            -- FIX: On utilise task.spawn pour éviter l'erreur de Capability Plugin
+            task.spawn(function()
+                pcall(function()
+                    if self:IsA("RemoteEvent") or self:IsA("RemoteFunction") then
+                        local rType = self:IsA("RemoteEvent") and "Event" or "Function"
+                        local rName = tostring(self.Name)
+                        local rPath = ""
+                        pcall(function() rPath = self:GetFullName() end)
+                        if rPath == "" then rPath = tostring(self) end
+                        
+                        queueRemoteCapture(rName, rType, args, rPath)
+                    end
+                end)
+            end)
         end
         
-        return oldNamecall(self, ...)
+        -- FIX: On retourne TOUJOURS l'appel original avec unpack(args) pour ne pas bloquer le jeu
+        return oldNamecall(self, unpack(args))
     end))
 end
 
@@ -402,4 +428,4 @@ end
 makeDraggable(MainFrame, Header)
 makeDraggable(MinButton, MinButton)
 
-print("✅ Mobile Remote Spy Restored & Fixed")
+print("✅ Mobile Remote Spy Restored & Fixed (No Deletions)")
