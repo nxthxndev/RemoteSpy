@@ -1,4 +1,4 @@
--- 🔥 ULTIMATE REMOTE CONTROLLER - 100% UNC COMPATIBLE (FIXED)
+-- 🔥 ULTIMATE REMOTE CONTROLLER - 100% UNC COMPATIBLE (BUG FIXED)
 -- Hook complet, modification d'args, spy avancé, blocage, repeat firing, custom args
 
 local TweenService = game:GetService("TweenService")
@@ -140,7 +140,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(0, 300, 0, 20)
 Subtitle.Position = UDim2.new(0, 25, 0, 40)
 Subtitle.BackgroundTransparency = 1
-Title.Text = "100% UNC | Full Control"
+Subtitle.Text = "100% UNC | Full Control"
 Subtitle.TextColor3 = Color3.fromRGB(150, 150, 180)
 Subtitle.TextSize = 12
 Subtitle.Font = Enum.Font.GothamMedium
@@ -732,28 +732,32 @@ local function addRemoteToList(remoteName, remoteType, args, remotePath, remoteO
     updateStats()
 end
 
--- Hook system (FIXED - Protection contre les erreurs d'accès)
+-- Hook system (FIXED - Le remote doit TOUJOURS s'exécuter!)
 local oldNamecall
 oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
     local args = {...}
     local method = getnamecallmethod()
 
+    -- Vérifier si c'est un remote AVANT de faire quoi que ce soit
     if (method == "FireServer" or method == "InvokeServer") then
-        local isRemote = false
-        local remoteType = ""
+        local shouldBlock = false
         
-        pcall(function()
-            if self:IsA("RemoteEvent") then
-                isRemote = true
-                remoteType = "Event"
-            elseif self:IsA("RemoteFunction") then
-                isRemote = true
-                remoteType = "Function"
-            end
-        end)
+        -- Async capture (ne bloque JAMAIS l'exécution)
+        task.spawn(function()
+            local isRemote = false
+            local remoteType = ""
+            
+            pcall(function()
+                if self:IsA("RemoteEvent") then
+                    isRemote = true
+                    remoteType = "Event"
+                elseif self:IsA("RemoteFunction") then
+                    isRemote = true
+                    remoteType = "Function"
+                end
+            end)
 
-        if isRemote then
-            task.spawn(function()
+            if isRemote then
                 local remotePath = safeGetFullName(self)
                 local remoteName = tostring(self)
                 
@@ -761,13 +765,15 @@ oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
                     remoteName = self.Name
                 end)
 
+                -- Check si bloqué
                 if blockedRemotes[remotePath] then
                     if logToConsole then
                         print("🚫 [BLOCKED]", remotePath, "Args:", unpack(args))
                     end
-                    return
+                    -- NE PAS RETURN ICI, juste log
                 end
 
+                -- Capture si activé
                 if isCapturing then
                     pcall(function()
                         addRemoteToList(remoteName, remoteType, args, remotePath, self)
@@ -777,10 +783,11 @@ oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
                         print("📡 [" .. remoteType .. "]", remotePath, "Args:", unpack(args))
                     end
                 end
-            end)
-        end
+            end
+        end)
     end
 
+    -- TOUJOURS appeler la fonction originale (ne jamais bloquer)
     return oldNamecall(self, ...)
 end))
 
@@ -1009,3 +1016,4 @@ end)
 print("🔥 ULTIMATE REMOTE SPY LOADED!")
 print("✅ 100% UNC Compatible")
 print("⚡ Full remote control activated")
+print("⚠️  Block feature is LOG ONLY - remotes always execute!")
