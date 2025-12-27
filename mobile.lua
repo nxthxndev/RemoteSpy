@@ -1,44 +1,33 @@
--- 🔥 ULTIMATE MOBILE REMOTE SPY - THREAD SAFE VERSION
--- Compatible avec tous les exécuteurs mobiles (fix erreur Plugin)
+-- 🔥 ULTIMATE MOBILE REMOTE SPY - ZERO THREAD ERRORS
+-- Fix complet pour l'erreur Plugin/Instance
 
--- Protection contre les erreurs
-local function safePcall(func, ...)
-    local success, result = pcall(func, ...)
-    if not success then
-        warn("Error:", result)
-    end
-    return success, result
-end
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
 
--- Services (avec fallback)
-local function safeService(name)
-    local s, result = pcall(game.GetService, game, name)
-    return s and result or nil
-end
+-- Parent GUI (avec fallback mobile)
+local GuiParent = (function()
+    local success, coreGui = pcall(game.GetService, game, "CoreGui")
+    return success and coreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
+end)()
 
-local Players = safeService("Players")
-local CoreGui = safeService("CoreGui")
-local TweenService = safeService("TweenService")
-local HttpService = safeService("HttpService")
-local UserInputService = safeService("UserInputService")
-
--- Fallback pour CoreGui (mobile)
-local GuiParent = CoreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
-
--- Vérifier les fonctions UNC
+-- Vérifier fonctions UNC
 local hasHook = hookmetamethod ~= nil
 local getNamecall = getnamecallmethod or function() return "" end
 local checkCaller = checkcaller or function() return false end
 local newCC = newcclosure or function(f) return f end
-local setClip = setclipboard or toclipboard or function(t) print("Clipboard:", t) end
 
--- Variables globales
+-- Variables
 local remoteLog = {}
 local isCapturing = true
 local selectedEntry = nil
 local isMinimized = false
 
--- Fonctions utilitaires
+-- IMPORTANT: File d'attente pour créer les UI dans le thread principal
+local uiQueue = {}
+
+-- Fonction utilitaire
 local function safeStringify(value)
     local t = typeof(value)
     if t == "Instance" then
@@ -46,9 +35,9 @@ local function safeStringify(value)
         return s and name or tostring(value)
     elseif t == "table" then
         local str = "{"
-        local success = pcall(function()
+        pcall(function()
             for k, v in pairs(value) do
-                str = str .. tostring(k) .. "=" .. safeStringify(v) .. ", "
+                str = str .. tostring(k) .. "=" .. tostring(v) .. ", "
             end
         end)
         return str .. "}"
@@ -57,19 +46,14 @@ local function safeStringify(value)
     end
 end
 
--- UI Creation
+-- === UI CREATION (THREAD PRINCIPAL) ===
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MobileRemoteSpy_" .. math.random(1000, 9999)
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = GuiParent
 
-safePcall(function()
-    ScreenGui.Parent = GuiParent
-end)
-
--- Minimize Button (floating)
 local MinButton = Instance.new("TextButton")
-MinButton.Name = "MinButton"
 MinButton.Size = UDim2.new(0, 60, 0, 60)
 MinButton.Position = UDim2.new(0, 10, 0, 100)
 MinButton.BackgroundColor3 = Color3.fromRGB(255, 50, 150)
@@ -85,9 +69,7 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(1, 0)
 MinCorner.Parent = MinButton
 
--- Main Frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 340, 0, 480)
 MainFrame.Position = UDim2.new(0.5, -170, 0.5, -240)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
@@ -104,7 +86,6 @@ MainStroke.Color = Color3.fromRGB(255, 50, 150)
 MainStroke.Thickness = 2
 MainStroke.Parent = MainFrame
 
--- Header
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
@@ -137,7 +118,6 @@ StatusLabel.Font = Enum.Font.Gotham
 StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 StatusLabel.Parent = Header
 
--- Hide Button
 local HideBtn = Instance.new("TextButton")
 HideBtn.Size = UDim2.new(0, 40, 0, 40)
 HideBtn.Position = UDim2.new(1, -45, 0, 5)
@@ -153,7 +133,6 @@ local HideBtnCorner = Instance.new("UICorner")
 HideBtnCorner.CornerRadius = UDim.new(0, 8)
 HideBtnCorner.Parent = HideBtn
 
--- Counter
 local CounterLabel = Instance.new("TextLabel")
 CounterLabel.Size = UDim2.new(0, 80, 0, 40)
 CounterLabel.Position = UDim2.new(1, -90, 0, 5)
@@ -169,7 +148,6 @@ local CounterCorner = Instance.new("UICorner")
 CounterCorner.CornerRadius = UDim.new(0, 8)
 CounterCorner.Parent = CounterLabel
 
--- Remote List
 local RemoteList = Instance.new("ScrollingFrame")
 RemoteList.Size = UDim2.new(1, -20, 0, 220)
 RemoteList.Position = UDim2.new(0, 10, 0, 60)
@@ -189,7 +167,6 @@ ListLayout.Padding = UDim.new(0, 6)
 ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ListLayout.Parent = RemoteList
 
--- Details Panel
 local DetailsPanel = Instance.new("ScrollingFrame")
 DetailsPanel.Size = UDim2.new(1, -20, 0, 130)
 DetailsPanel.Position = UDim2.new(0, 10, 0, 290)
@@ -217,7 +194,6 @@ DetailsText.TextXAlignment = Enum.TextXAlignment.Left
 DetailsText.TextYAlignment = Enum.TextYAlignment.Top
 DetailsText.Parent = DetailsPanel
 
--- Control Buttons
 local ButtonContainer = Instance.new("Frame")
 ButtonContainer.Size = UDim2.new(1, -20, 0, 45)
 ButtonContainer.Position = UDim2.new(0, 10, 0, 430)
@@ -239,14 +215,13 @@ local function createButton(text, pos, color)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = btn
-    
     return btn
 end
 
 local CaptureBtn = createButton("🔴 SPY ON", UDim2.new(0, 0, 0, 0), Color3.fromRGB(60, 200, 120))
 local ClearBtn = createButton("🗑️ CLEAR", UDim2.new(0.52, 0, 0, 0), Color3.fromRGB(200, 60, 60))
 
--- Functions
+-- === FONCTIONS ===
 local function updateCounter()
     CounterLabel.Text = tostring(#remoteLog)
 end
@@ -260,14 +235,15 @@ local function formatArgs(args)
     return result
 end
 
--- FIX: Créer les éléments UI dans le thread principal
-local function createRemoteItem(remoteName, remoteType, remotePath)
+-- Créer UI item (SEULEMENT appelé depuis le thread principal)
+local function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     local Item = Instance.new("TextButton")
     Item.Size = UDim2.new(1, -10, 0, 55)
     Item.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     Item.BorderSizePixel = 0
     Item.Text = ""
     Item.AutoButtonColor = false
+    Item.LayoutOrder = -entry.time
     Item.Parent = RemoteList
     
     local ItemCorner = Instance.new("UICorner")
@@ -313,11 +289,30 @@ local function createRemoteItem(remoteName, remoteType, remotePath)
     PathLabel.TextTruncate = Enum.TextTruncate.AtEnd
     PathLabel.Parent = Item
     
-    return Item
+    Item.MouseButton1Click:Connect(function()
+        selectedEntry = entry
+        for _, child in ipairs(RemoteList:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+            end
+        end
+        Item.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+        
+        local details = string.format(
+            "🎯 NAME: %s\n⚙️ TYPE: %s\n📍 PATH: %s\n⏰ TIME: %s\n\n📦 ARGUMENTS:\n%s",
+            entry.name, entry.type, entry.path,
+            os.date("%H:%M:%S", entry.time),
+            formatArgs(entry.args)
+        )
+        DetailsText.Text = details
+        DetailsPanel.CanvasSize = UDim2.new(0, 0, 0, DetailsText.TextBounds.Y + 20)
+    end)
+    
+    RemoteList.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
 end
 
-local function addRemoteToList(remoteName, remoteType, args, remotePath)
-    -- Éviter les doublons récents
+-- Ajouter à la file (appelé depuis le hook)
+local function queueRemoteCapture(remoteName, remoteType, args, remotePath)
     for i = 1, math.min(3, #remoteLog) do
         if remoteLog[i] and remoteLog[i].path == remotePath and os.time() - remoteLog[i].time < 0.5 then
             return
@@ -337,81 +332,43 @@ local function addRemoteToList(remoteName, remoteType, args, remotePath)
         table.remove(remoteLog, #remoteLog)
     end
     
-    -- IMPORTANT: Créer l'UI dans le thread principal avec game:GetService
-    game:GetService("RunService").RenderStepped:Wait()
-    
-    local Item = createRemoteItem(remoteName, remoteType, remotePath)
-    Item.LayoutOrder = -entry.time
-    
-    Item.MouseButton1Click:Connect(function()
-        selectedEntry = entry
-        
-        -- Highlight
-        for _, child in ipairs(RemoteList:GetChildren()) do
-            if child:IsA("TextButton") then
-                child.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-            end
-        end
-        Item.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-        
-        -- Update details
-        local details = string.format(
-            "🎯 NAME: %s\n⚙️ TYPE: %s\n📍 PATH: %s\n⏰ TIME: %s\n\n📦 ARGUMENTS:\n%s",
-            entry.name,
-            entry.type,
-            entry.path,
-            os.date("%H:%M:%S", entry.time),
-            formatArgs(entry.args)
-        )
-        DetailsText.Text = details
-        DetailsPanel.CanvasSize = UDim2.new(0, 0, 0, DetailsText.TextBounds.Y + 20)
-    end)
-    
-    RemoteList.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
+    table.insert(uiQueue, {remoteName, remoteType, remotePath, entry})
     updateCounter()
 end
 
--- Hook System (SAFE + THREAD FIX)
+-- Processeur de file (THREAD PRINCIPAL)
+RunService.Heartbeat:Connect(function()
+    if #uiQueue > 0 then
+        local data = table.remove(uiQueue, 1)
+        pcall(createRemoteItemUI, data[1], data[2], data[3], data[4])
+    end
+end)
+
+-- === HOOK ===
 if hasHook then
-    local success = safePcall(function()
+    local success = pcall(function()
         local oldNamecall
         oldNamecall = hookmetamethod(game, "__namecall", newCC(function(self, ...)
             local method = getNamecall()
             local args = {...}
             
-            -- Capture remotes
-            if (method == "FireServer" or method == "InvokeServer") and not checkCaller() then
-                if isCapturing then
-                    -- Capturer les données SANS créer d'Instance ici
-                    local capturedData = {
-                        self = self,
-                        args = args,
-                        method = method
-                    }
+            if (method == "FireServer" or method == "InvokeServer") and not checkCaller() and isCapturing then
+                pcall(function()
+                    local isEvent = self:IsA("RemoteEvent")
+                    local isFunction = self:IsA("RemoteFunction")
                     
-                    -- Utiliser RunService pour créer l'UI dans le bon thread
-                    task.spawn(function()
-                        safePcall(function()
-                            local remoteType, remoteName, remotePath
-                            
-                            -- Vérifications sécurisées
-                            local isEvent = pcall(function() return self:IsA("RemoteEvent") end) and self:IsA("RemoteEvent")
-                            local isFunction = pcall(function() return self:IsA("RemoteFunction") end) and self:IsA("RemoteFunction")
-                            
-                            if isEvent or isFunction then
-                                remoteType = isEvent and "Event" or "Function"
-                                
-                                local nameSuccess, name = pcall(function() return self.Name end)
-                                remoteName = nameSuccess and name or "Unknown"
-                                
-                                local pathSuccess, path = pcall(function() return self:GetFullName() end)
-                                remotePath = pathSuccess and path or tostring(self)
-                                
-                                addRemoteToList(remoteName, remoteType, capturedData.args, remotePath)
-                            end
-                        end)
-                    end)
-                end
+                    if isEvent or isFunction then
+                        local remoteType = isEvent and "Event" or "Function"
+                        local remoteName = self.Name
+                        local remotePath = ""
+                        
+                        pcall(function() remotePath = self:GetFullName() end)
+                        if remotePath == "" then remotePath = tostring(self) end
+                        
+                        -- NE PAS créer d'Instance ici, juste ajouter à la file
+                        queueRemoteCapture(remoteName, remoteType, args, remotePath)
+                    end
+                end)
             end
             
             return oldNamecall(self, ...)
@@ -424,15 +381,14 @@ if hasHook then
     else
         StatusLabel.Text = "⚠️ Hook Failed"
         StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-        DetailsText.Text = "⚠️ Hook failed!\n\nYour executor may not support hookmetamethod.\n\nTry a different executor like:\n• Arceus X\n• Fluxus\n• Delta"
     end
 else
     StatusLabel.Text = "❌ No Hook"
     StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-    DetailsText.Text = "❌ hookmetamethod not found!\n\nYour executor doesn't support remote hooking.\n\nPlease use a better executor."
+    DetailsText.Text = "❌ hookmetamethod not supported"
 end
 
--- Button Events
+-- === EVENTS ===
 local function toggleMinimize()
     isMinimized = not isMinimized
     MainFrame.Visible = not isMinimized
@@ -451,10 +407,9 @@ end)
 
 ClearBtn.MouseButton1Click:Connect(function()
     remoteLog = {}
+    uiQueue = {}
     for _, child in ipairs(RemoteList:GetChildren()) do
-        if child:IsA("TextButton") then
-            child:Destroy()
-        end
+        if child:IsA("TextButton") then child:Destroy() end
     end
     selectedEntry = nil
     DetailsText.Text = "💡 Logs cleared!"
@@ -462,12 +417,9 @@ ClearBtn.MouseButton1Click:Connect(function()
     updateCounter()
 end)
 
--- Draggable (Mobile Compatible)
+-- Draggable
 local function makeDraggable(frame, handle)
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-    
+    local dragging, dragStart, startPos
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
@@ -475,38 +427,26 @@ local function makeDraggable(frame, handle)
             startPos = frame.Position
         end
     end)
-    
     handle.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end)
-    
-    if UserInputService then
-        UserInputService.InputChanged:Connect(function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                local delta = input.Position - dragStart
-                frame.Position = UDim2.new(
-                    startPos.X.Scale,
-                    startPos.X.Offset + delta.X,
-                    startPos.Y.Scale,
-                    startPos.Y.Offset + delta.Y
-                )
-            end
-        end)
-    end
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
 end
 
 makeDraggable(MainFrame, Header)
 makeDraggable(MinButton, MinButton)
 
--- Success message
-print("✅ Mobile Remote Spy Loaded!")
-print("📱 Thread-safe version")
-print("🔍 Hook status:", hasHook and "Available" or "Not Available")
+print("✅ Mobile Remote Spy Loaded (Zero Thread Errors)")
+print("🔍 Hook:", hasHook and "Active" or "Not Available")
 
--- Initial hint
 task.wait(2)
 if #remoteLog == 0 then
-    DetailsText.Text = "💡 No remotes captured yet!\n\n✨ TIPS:\n• Interact with the game\n• Click buttons, open menus\n• Walk around and trigger events\n\nThe spy will automatically capture remote calls!"
+    DetailsText.Text = "💡 Interact with the game to capture remotes!"
 end
