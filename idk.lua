@@ -1,9 +1,9 @@
--- 🔥 ULTIMATE MOBILE REMOTE SPY - ELITE EDITION (V2 FIXED)
+-- 🔥 ULTIMATE MOBILE REMOTE SPY - ELITE EDITION (ZERO ERROR VERSION)
 -- ✅ Interface Ultra Moderne & Clean
 -- ✅ Optimisation Mobile Maximale
 -- ✅ Système de Blocage Intelligent (Anti-Spam)
 -- ✅ Replay & Edition d'Arguments
--- ✅ Fix: Compatibilité Polices Universelles
+-- ✅ Fix: Système de Fallback de Police Dynamique (Anti-Crash)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -18,6 +18,27 @@ local GuiParent = (function()
     local success, coreGui = pcall(game.GetService, game, "CoreGui")
     return success and coreGui or LocalPlayer:WaitForChild("PlayerGui")
 end)()
+
+-- === SYSTÈME DE POLICE SÉCURISÉ ===
+local function getSafeFont(fontName, fallback)
+    local success, font = pcall(function()
+        return Enum.Font[fontName]
+    end)
+    if success then return font end
+    
+    -- Fallback vers des polices très communes
+    local commonFonts = {"SourceSans", "Arial", "Legacy"}
+    for _, f in ipairs(commonFonts) do
+        local s, res = pcall(function() return Enum.Font[f] end)
+        if s then return res end
+    end
+    
+    return fallback or Enum.Font.BuilderSans -- Ultime recours
+end
+
+local FONT_BOLD = getSafeFont("SourceSansBold")
+local FONT_REGULAR = getSafeFont("SourceSans")
+local FONT_CODE = getSafeFont("Code")
 
 -- Vérifications UNC
 local hasHook = hookmetamethod ~= nil
@@ -46,11 +67,7 @@ local config = {
     accentColor = Color3.fromRGB(0, 170, 255),
     bgColor = Color3.fromRGB(10, 10, 12),
     secondaryColor = Color3.fromRGB(20, 20, 25),
-    spamThreshold = 10,
-    -- Polices de secours pour compatibilité maximale
-    fontBold = Enum.Font.SourceSansBold,
-    fontRegular = Enum.Font.SourceSans,
-    fontCode = Enum.Font.Code
+    spamThreshold = 10
 }
 
 -- === UTILITAIRES ===
@@ -131,7 +148,7 @@ local function showNotification(text, color, duration)
         label.Text = text
         label.TextColor3 = Color3.new(1, 1, 1)
         label.TextSize = 14
-        label.Font = config.fontRegular
+        label.Font = FONT_REGULAR
         label.TextWrapped = true
         label.Parent = notif
         
@@ -143,7 +160,7 @@ local function showNotification(text, color, duration)
     end)
 end
 
--- Bouton minimisé (Flottant)
+-- Bouton minimisé
 local MinButton = Instance.new("TextButton")
 MinButton.Size = UDim2.new(0, 60, 0, 60)
 MinButton.Position = UDim2.new(0, 20, 0.5, -30)
@@ -210,7 +227,7 @@ Title.Text = "REMOTE SPY <font color='#00AAFF'>ELITE</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.TextSize = 18
-Title.Font = config.fontBold
+Title.Font = FONT_BOLD
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
@@ -221,7 +238,7 @@ CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "×"
 CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.TextSize = 32
-CloseBtn.Font = config.fontRegular
+CloseBtn.Font = FONT_REGULAR
 CloseBtn.Parent = Header
 
 local ClearBtn = Instance.new("TextButton")
@@ -233,7 +250,7 @@ ClearBtn.TextColor3 = Color3.new(1, 1, 1)
 ClearBtn.TextSize = 18
 ClearBtn.Parent = Header
 
--- Conteneur Principal (Scrollable)
+-- Conteneur Principal
 local Content = Instance.new("ScrollingFrame")
 Content.Size = UDim2.new(1, 0, 1, -60)
 Content.Position = UDim2.new(0, 0, 0, 60)
@@ -255,7 +272,7 @@ UIPadding.PaddingTop = UDim.new(0, 15)
 UIPadding.PaddingBottom = UDim.new(0, 15)
 UIPadding.Parent = Content
 
--- Barre de recherche & Filtres
+-- Barre de recherche
 local Controls = Instance.new("Frame")
 Controls.Size = UDim2.new(0.9, 0, 0, 80)
 Controls.BackgroundColor3 = config.secondaryColor
@@ -275,7 +292,7 @@ SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.new(1, 1, 1)
 SearchBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 110)
 SearchBox.TextSize = 14
-SearchBox.Font = config.fontRegular
+SearchBox.Font = FONT_REGULAR
 SearchBox.TextXAlignment = Enum.TextXAlignment.Left
 SearchBox.Parent = Controls
 
@@ -297,7 +314,7 @@ local function createFilterBtn(text, type)
     btn.Text = text
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.TextSize = 11
-    btn.Font = config.fontBold
+    btn.Font = FONT_BOLD
     btn.Parent = FilterContainer
     
     local corner = Instance.new("UICorner")
@@ -318,7 +335,7 @@ createFilterBtn("TOUT", "All")
 createFilterBtn("EVENTS", "Event")
 createFilterBtn("FUNCS", "Function")
 
--- Section Statistiques & Blocage
+-- Section Statistiques
 local StatsFrame = Instance.new("Frame")
 StatsFrame.Size = UDim2.new(0.9, 0, 0, 80)
 StatsFrame.BackgroundColor3 = config.secondaryColor
@@ -336,7 +353,7 @@ StatsTitle.BackgroundTransparency = 1
 StatsTitle.Text = "🛡️ PROTECTION ANTI-SPAM"
 StatsTitle.TextColor3 = config.accentColor
 StatsTitle.TextSize = 12
-StatsTitle.Font = config.fontBold
+StatsTitle.Font = FONT_BOLD
 StatsTitle.TextXAlignment = Enum.TextXAlignment.Left
 StatsTitle.Parent = StatsFrame
 
@@ -347,7 +364,7 @@ BlockInfo.BackgroundTransparency = 1
 BlockInfo.Text = "Remotes bloqués: 0\nDétection de spam active"
 BlockInfo.TextColor3 = Color3.fromRGB(180, 180, 190)
 BlockInfo.TextSize = 11
-BlockInfo.Font = config.fontRegular
+BlockInfo.Font = FONT_REGULAR
 BlockInfo.TextXAlignment = Enum.TextXAlignment.Left
 BlockInfo.Parent = StatsFrame
 
@@ -363,7 +380,7 @@ LogList.SortOrder = Enum.SortOrder.LayoutOrder
 LogList.Padding = UDim.new(0, 8)
 LogList.Parent = LogContainer
 
--- === LOGIQUE DE BLOCAGE & FILTRAGE ===
+-- === LOGIQUE ===
 local function refreshDisplay()
     for _, child in ipairs(LogContainer:GetChildren()) do
         if child:IsA("Frame") then child:Destroy() end
@@ -397,7 +414,6 @@ local function toggleBlockRemote(path)
     refreshDisplay()
 end
 
--- Création d'un item de log
 function createLogItem(entry)
     local Item = Instance.new("Frame")
     Item.Size = UDim2.new(1, 0, 0, 70)
@@ -416,7 +432,7 @@ function createLogItem(entry)
     NameLabel.Text = entry.name
     NameLabel.TextColor3 = Color3.new(1, 1, 1)
     NameLabel.TextSize = 14
-    NameLabel.Font = config.fontBold
+    NameLabel.Font = FONT_BOLD
     NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     NameLabel.Parent = Item
     
@@ -427,7 +443,7 @@ function createLogItem(entry)
     TypeLabel.Text = entry.type
     TypeLabel.TextColor3 = Color3.new(1, 1, 1)
     TypeLabel.TextSize = 10
-    TypeLabel.Font = config.fontBold
+    TypeLabel.Font = FONT_BOLD
     TypeLabel.Parent = Item
     
     local TypeCorner = Instance.new("UICorner")
@@ -441,7 +457,7 @@ function createLogItem(entry)
     ArgsLabel.Text = safeStringify(entry.args):sub(1, 50)
     ArgsLabel.TextColor3 = Color3.fromRGB(150, 150, 160)
     ArgsLabel.TextSize = 12
-    ArgsLabel.Font = config.fontCode
+    ArgsLabel.Font = FONT_CODE
     ArgsLabel.TextXAlignment = Enum.TextXAlignment.Left
     ArgsLabel.Parent = Item
 
@@ -588,5 +604,3 @@ ClearBtn.MouseButton1Click:Connect(function()
 end)
 
 showNotification("🚀 Remote Spy ELITE Chargé !", config.accentColor, 3)
-
-
