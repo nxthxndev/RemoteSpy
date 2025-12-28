@@ -126,7 +126,7 @@ local function showNotification(text, color, duration)
         label.Text = text
         label.TextColor3 = Color3.new(1, 1, 1)
         label.TextSize = 14
-        label.Font = Enum.Font.GothamMedium
+        label.Font = Enum.Font.Gotham
         label.TextWrapped = true
         label.Parent = notif
         
@@ -217,7 +217,7 @@ CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "×"
 CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.TextSize = 32
-CloseBtn.Font = Enum.Font.GothamLight
+CloseBtn.Font = Enum.Font.Gotham
 CloseBtn.Parent = Header
 
 local ClearBtn = Instance.new("TextButton")
@@ -601,3 +601,4 @@ MinButton.MouseButton1Click:Connect(function()
 end)
 
 showNotification("🚀 Remote Spy ELITE Chargé !", config.accentColor, 3)
+
