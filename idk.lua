@@ -1,8 +1,9 @@
--- 🔥 ULTIMATE MOBILE REMOTE SPY - ELITE EDITION
+-- 🔥 ULTIMATE MOBILE REMOTE SPY - ELITE EDITION (V2 FIXED)
 -- ✅ Interface Ultra Moderne & Clean
 -- ✅ Optimisation Mobile Maximale
 -- ✅ Système de Blocage Intelligent (Anti-Spam)
 -- ✅ Replay & Edition d'Arguments
+-- ✅ Fix: Compatibilité Polices Universelles
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -33,8 +34,8 @@ local isMinimized = false
 local filterText = ""
 local filterType = "All"
 local favorites = {}
-local blockedRemotes = {} -- Liste des remotes bloqués
-local remoteStats = {} -- Pour détecter le spam
+local blockedRemotes = {}
+local remoteStats = {}
 
 -- Configuration
 local config = {
@@ -42,10 +43,14 @@ local config = {
     deduplicateTime = 0.05,
     enableNotifications = true,
     animationSpeed = 0.3,
-    accentColor = Color3.fromRGB(0, 170, 255), -- Bleu moderne
+    accentColor = Color3.fromRGB(0, 170, 255),
     bgColor = Color3.fromRGB(10, 10, 12),
     secondaryColor = Color3.fromRGB(20, 20, 25),
-    spamThreshold = 10 -- Nombre d'appels par seconde pour alerter
+    spamThreshold = 10,
+    -- Polices de secours pour compatibilité maximale
+    fontBold = Enum.Font.SourceSansBold,
+    fontRegular = Enum.Font.SourceSans,
+    fontCode = Enum.Font.Code
 }
 
 -- === UTILITAIRES ===
@@ -126,7 +131,7 @@ local function showNotification(text, color, duration)
         label.Text = text
         label.TextColor3 = Color3.new(1, 1, 1)
         label.TextSize = 14
-        label.Font = Enum.Font.Gotham
+        label.Font = config.fontRegular
         label.TextWrapped = true
         label.Parent = notif
         
@@ -190,7 +195,6 @@ local HeaderCorner = Instance.new("UICorner")
 HeaderCorner.CornerRadius = UDim.new(0, 24)
 HeaderCorner.Parent = Header
 
--- Cache pour arrondir seulement le haut
 local HeaderFix = Instance.new("Frame")
 HeaderFix.Size = UDim2.new(1, 0, 0, 20)
 HeaderFix.Position = UDim2.new(0, 0, 1, -20)
@@ -206,7 +210,7 @@ Title.Text = "REMOTE SPY <font color='#00AAFF'>ELITE</font>"
 Title.RichText = true
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.TextSize = 18
-Title.Font = Enum.Font.GothamBold
+Title.Font = config.fontBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
@@ -217,7 +221,7 @@ CloseBtn.BackgroundTransparency = 1
 CloseBtn.Text = "×"
 CloseBtn.TextColor3 = Color3.new(1, 1, 1)
 CloseBtn.TextSize = 32
-CloseBtn.Font = Enum.Font.Gotham
+CloseBtn.Font = config.fontRegular
 CloseBtn.Parent = Header
 
 local ClearBtn = Instance.new("TextButton")
@@ -228,12 +232,6 @@ ClearBtn.Text = "🗑️"
 ClearBtn.TextColor3 = Color3.new(1, 1, 1)
 ClearBtn.TextSize = 18
 ClearBtn.Parent = Header
-
-ClearBtn.MouseButton1Click:Connect(function()
-    remoteLog = {}
-    refreshDisplay()
-    showNotification("Logs vidés !", config.accentColor)
-end)
 
 -- Conteneur Principal (Scrollable)
 local Content = Instance.new("ScrollingFrame")
@@ -277,7 +275,7 @@ SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.new(1, 1, 1)
 SearchBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 110)
 SearchBox.TextSize = 14
-SearchBox.Font = Enum.Font.Gotham
+SearchBox.Font = config.fontRegular
 SearchBox.TextXAlignment = Enum.TextXAlignment.Left
 SearchBox.Parent = Controls
 
@@ -299,7 +297,7 @@ local function createFilterBtn(text, type)
     btn.Text = text
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.TextSize = 11
-    btn.Font = Enum.Font.GothamBold
+    btn.Font = config.fontBold
     btn.Parent = FilterContainer
     
     local corner = Instance.new("UICorner")
@@ -338,7 +336,7 @@ StatsTitle.BackgroundTransparency = 1
 StatsTitle.Text = "🛡️ PROTECTION ANTI-SPAM"
 StatsTitle.TextColor3 = config.accentColor
 StatsTitle.TextSize = 12
-StatsTitle.Font = Enum.Font.GothamBold
+StatsTitle.Font = config.fontBold
 StatsTitle.TextXAlignment = Enum.TextXAlignment.Left
 StatsTitle.Parent = StatsFrame
 
@@ -349,7 +347,7 @@ BlockInfo.BackgroundTransparency = 1
 BlockInfo.Text = "Remotes bloqués: 0\nDétection de spam active"
 BlockInfo.TextColor3 = Color3.fromRGB(180, 180, 190)
 BlockInfo.TextSize = 11
-BlockInfo.Font = Enum.Font.Gotham
+BlockInfo.Font = config.fontRegular
 BlockInfo.TextXAlignment = Enum.TextXAlignment.Left
 BlockInfo.Parent = StatsFrame
 
@@ -371,12 +369,10 @@ local function refreshDisplay()
         if child:IsA("Frame") then child:Destroy() end
     end
     
-    local count = 0
     for _, entry in ipairs(remoteLog) do
         if (filterType == "All" or entry.type == filterType) and
            (filterText == "" or string.find(string.lower(entry.name), string.lower(filterText))) then
             createLogItem(entry)
-            count = count + 1
         end
     end
 end
@@ -401,44 +397,6 @@ local function toggleBlockRemote(path)
     refreshDisplay()
 end
 
--- === HOOKING ===
-local function onRemoteCalled(remote, args, type)
-    if not isCapturing then return end
-    
-    local path = remote:GetFullName()
-    if blockedRemotes[path] then return end
-    
-    -- Détection de spam
-    remoteStats[path] = (remoteStats[path] or 0) + 1
-    task.delay(1, function()
-        remoteStats[path] = remoteStats[path] - 1
-    end)
-    
-    if remoteStats[path] > config.spamThreshold then
-        if not blockedRemotes[path] then
-            showNotification("⚠️ Spam détecté: " .. remote.Name, Color3.fromRGB(255, 150, 0))
-            -- Optionnel: auto-block si trop de spam
-            -- toggleBlockRemote(path)
-        end
-    end
-
-    local entry = {
-        name = remote.Name,
-        path = path,
-        args = deepCopy(args),
-        time = tick(),
-        type = type,
-        remote = remote
-    }
-    
-    table.insert(remoteLog, 1, entry)
-    if #remoteLog > config.maxLogs then
-        table.remove(remoteLog)
-    end
-    
-    createLogItem(entry)
-end
-
 -- Création d'un item de log
 function createLogItem(entry)
     local Item = Instance.new("Frame")
@@ -458,7 +416,7 @@ function createLogItem(entry)
     NameLabel.Text = entry.name
     NameLabel.TextColor3 = Color3.new(1, 1, 1)
     NameLabel.TextSize = 14
-    NameLabel.Font = Enum.Font.GothamBold
+    NameLabel.Font = config.fontBold
     NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     NameLabel.Parent = Item
     
@@ -469,7 +427,7 @@ function createLogItem(entry)
     TypeLabel.Text = entry.type
     TypeLabel.TextColor3 = Color3.new(1, 1, 1)
     TypeLabel.TextSize = 10
-    TypeLabel.Font = Enum.Font.GothamBold
+    TypeLabel.Font = config.fontBold
     TypeLabel.Parent = Item
     
     local TypeCorner = Instance.new("UICorner")
@@ -483,11 +441,10 @@ function createLogItem(entry)
     ArgsLabel.Text = safeStringify(entry.args):sub(1, 50)
     ArgsLabel.TextColor3 = Color3.fromRGB(150, 150, 160)
     ArgsLabel.TextSize = 12
-    ArgsLabel.Font = Enum.Font.Code
+    ArgsLabel.Font = config.fontCode
     ArgsLabel.TextXAlignment = Enum.TextXAlignment.Left
     ArgsLabel.Parent = Item
 
-    -- Boutons d'action rapides
     local Actions = Instance.new("Frame")
     Actions.Size = UDim2.new(0, 100, 0, 30)
     Actions.Position = UDim2.new(1, -110, 1, -35)
@@ -496,7 +453,6 @@ function createLogItem(entry)
     
     local BlockBtn = Instance.new("TextButton")
     BlockBtn.Size = UDim2.new(0, 30, 0, 30)
-    BlockBtn.Position = UDim2.new(0, 0, 0, 0)
     BlockBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
     BlockBtn.Text = "🚫"
     BlockBtn.TextSize = 14
@@ -520,30 +476,58 @@ function createLogItem(entry)
 
     BlockBtn.MouseButton1Click:Connect(function()
         toggleBlockRemote(entry.path)
-        Item:Destroy()
     end)
     
     ReplayBtn.MouseButton1Click:Connect(function()
-        if entry.type == "Event" then
-            entry.remote:FireServer(unpack(entry.args))
-        else
-            entry.remote:InvokeServer(unpack(entry.args))
-        end
+        pcall(function()
+            if entry.type == "Event" then
+                entry.remote:FireServer(unpack(entry.args))
+            else
+                entry.remote:InvokeServer(unpack(entry.args))
+            end
+        end)
         showNotification("Replay envoyé !", config.accentColor)
     end)
     
-    -- Ajuster la taille du conteneur
     LogContainer.Size = UDim2.new(0.9, 0, 0, #LogContainer:GetChildren() * 80)
     Content.CanvasSize = UDim2.new(0, 0, 0, LogContainer.Size.Y.Offset + 200)
 end
 
--- === HOOKS RÉELS ===
+-- === HOOKING ===
+local function onRemoteCalled(remote, args, type)
+    if not isCapturing then return end
+    local path = remote:GetFullName()
+    if blockedRemotes[path] then return end
+    
+    remoteStats[path] = (remoteStats[path] or 0) + 1
+    task.delay(1, function() remoteStats[path] = remoteStats[path] - 1 end)
+    
+    if remoteStats[path] > config.spamThreshold then
+        if not blockedRemotes[path] then
+            showNotification("⚠️ Spam détecté: " .. remote.Name, Color3.fromRGB(255, 150, 0))
+        end
+    end
+
+    local entry = {
+        name = remote.Name,
+        path = path,
+        args = deepCopy(args),
+        time = tick(),
+        type = type,
+        remote = remote
+    }
+    
+    table.insert(remoteLog, 1, entry)
+    if #remoteLog > config.maxLogs then table.remove(remoteLog) end
+    
+    createLogItem(entry)
+end
+
 if hasHook then
     local oldNamecall
     oldNamecall = hookmetamethod(game, "__namecall", newCC(function(self, ...)
         local args = {...}
         local method = getNamecall()
-        
         if not checkCaller() then
             if method == "FireServer" or method == "fireServer" then
                 onRemoteCalled(self, args, "Event")
@@ -551,15 +535,12 @@ if hasHook then
                 onRemoteCalled(self, args, "Function")
             end
         end
-        
         return oldNamecall(self, ...)
     end))
     
     local oldFireServer
     oldFireServer = hookfunction(Instance.new("RemoteEvent").FireServer, newCC(function(self, ...)
-        if not checkCaller() then
-            onRemoteCalled(self, {...}, "Event")
-        end
+        if not checkCaller() then onRemoteCalled(self, {...}, "Event") end
         return oldFireServer(self, ...)
     end))
 end
@@ -600,5 +581,12 @@ MinButton.MouseButton1Click:Connect(function()
     MinButton.Visible = false
 end)
 
+ClearBtn.MouseButton1Click:Connect(function()
+    remoteLog = {}
+    refreshDisplay()
+    showNotification("Logs vidés !", config.accentColor)
+end)
+
 showNotification("🚀 Remote Spy ELITE Chargé !", config.accentColor, 3)
+
 
