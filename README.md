@@ -10,3 +10,7 @@ loadstring(game:HttpGet('https://raw.githubusercontent.com/nxthxndev/RemoteSpy/r
 BETA : 
 
 loadstring(game:HttpGet('https://raw.githubusercontent.com/nxthxndev/RemoteSpy/refs/heads/main/test.lua'))()
+
+IDK : 
+
+loadstring(game:HttpGet('https://raw.githubusercontent.com/nxthxndev/RemoteSpy/refs/heads/main/idk.lua'))()
