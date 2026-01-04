@@ -1,7 +1,8 @@
--- 🔥 ULTIMATE MOBILE REMOTE SPY - PROFESSIONAL EDITION
+-- 🔥 ULTIMATE MOBILE REMOTE SPY - PROFESSIONAL EDITION V2 (FIXED UI)
 -- ✅ Replay fonctionnel avec stockage des remotes
--- ✅ Interface moderne et clean
--- ✅ 100% optimisé mobile
+-- ✅ Interface moderne et clean AMÉLIORÉE
+-- ✅ Système de blocage d'affichage des remotes
+-- ✅ 100% optimisé mobile avec alignement parfait
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -26,7 +27,7 @@ local newCC = newcclosure or function(f) return f end
 
 -- Variables globales
 local remoteLog = {}
-local remoteCache = {} -- STOCKAGE DES REMOTES POUR REPLAY
+local remoteCache = {}
 local isCapturing = true
 local selectedEntry = nil
 local isMinimized = false
@@ -34,7 +35,7 @@ local uiQueue = {}
 local filterText = ""
 local filterType = "All"
 local favorites = {}
-local blockedRemotes = {}
+local blockedRemotes = {} -- LISTE DES REMOTES BLOQUÉS
 
 -- Configuration
 local config = {
@@ -85,7 +86,6 @@ local function deepCopy(tbl)
 end
 
 local function findRemoteByPath(path)
-    -- Méthode 1: Recherche directe
     local success, remote = pcall(function()
         local parts = {}
         for part in string.gmatch(path, "[^%.]+") do
@@ -105,8 +105,6 @@ local function findRemoteByPath(path)
     end)
     
     if success and remote then return remote end
-    
-    -- Méthode 2: Recherche dans le cache
     return remoteCache[path]
 end
 
@@ -116,6 +114,14 @@ local function storeRemote(path, remote)
     end
 end
 
+-- === CRÉATION UI ===
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "RemoteSpy_" .. math.random(10000, 99999)
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = GuiParent
+
 -- Notification moderne
 local function showNotification(text, color, duration)
     if not config.enableNotifications then return end
@@ -123,22 +129,34 @@ local function showNotification(text, color, duration)
     
     task.spawn(function()
         local notif = Instance.new("Frame")
-        notif.Size = UDim2.new(0, 240, 0, 50)
-        notif.Position = UDim2.new(0.5, -120, 0, -60)
+        notif.Size = UDim2.new(0, 260, 0, 55)
+        notif.Position = UDim2.new(0.5, -130, 0, -65)
         notif.BackgroundColor3 = color or Color3.fromRGB(40, 40, 50)
         notif.BorderSizePixel = 0
         notif.ZIndex = 100
         notif.Parent = ScreenGui
         
         local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 12)
+        corner.CornerRadius = UDim.new(0, 14)
         corner.Parent = notif
         
         local stroke = Instance.new("UIStroke")
         stroke.Color = Color3.fromRGB(255, 255, 255)
-        stroke.Transparency = 0.8
-        stroke.Thickness = 1
+        stroke.Transparency = 0.7
+        stroke.Thickness = 1.5
         stroke.Parent = notif
+        
+        local gradient = Instance.new("UIGradient")
+        gradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+        }
+        gradient.Rotation = 90
+        gradient.Transparency = NumberSequence.new{
+            NumberSequenceKeypoint.new(0, 0.95),
+            NumberSequenceKeypoint.new(1, 0.98)
+        }
+        gradient.Parent = notif
         
         local label = Instance.new("TextLabel")
         label.Size = UDim2.new(1, -20, 1, 0)
@@ -152,31 +170,23 @@ local function showNotification(text, color, duration)
         label.TextXAlignment = Enum.TextXAlignment.Center
         label.Parent = notif
         
-        notif:TweenPosition(UDim2.new(0.5, -120, 0, 10), "Out", "Quad", 0.3, true)
+        notif:TweenPosition(UDim2.new(0.5, -130, 0, 15), "Out", "Quad", 0.3, true)
         wait(duration)
-        notif:TweenPosition(UDim2.new(0.5, -120, 0, -60), "In", "Quad", 0.3, true)
+        notif:TweenPosition(UDim2.new(0.5, -130, 0, -65), "In", "Quad", 0.3, true)
         wait(0.3)
         notif:Destroy()
     end)
 end
 
--- === CRÉATION UI ===
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "RemoteSpy_" .. math.random(10000, 99999)
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = GuiParent
-
--- Bouton minimisé
+-- Bouton minimisé (AMÉLIORÉ)
 local MinButton = Instance.new("TextButton")
-MinButton.Size = UDim2.new(0, 70, 0, 70)
-MinButton.Position = UDim2.new(0, 15, 0.5, -35)
+MinButton.Size = UDim2.new(0, 65, 0, 65)
+MinButton.Position = UDim2.new(0, 20, 0.5, -32.5)
 MinButton.BackgroundColor3 = Color3.fromRGB(255, 70, 150)
 MinButton.BorderSizePixel = 0
 MinButton.Text = "📡"
 MinButton.TextColor3 = Color3.new(1, 1, 1)
-MinButton.TextSize = 28
+MinButton.TextSize = 26
 MinButton.Font = Enum.Font.GothamBold
 MinButton.Visible = false
 MinButton.ZIndex = 50
@@ -186,44 +196,52 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(1, 0)
 MinCorner.Parent = MinButton
 
-local MinShadow = Instance.new("ImageLabel")
-MinShadow.Size = UDim2.new(1, 10, 1, 10)
-MinShadow.Position = UDim2.new(0, -5, 0, -5)
-MinShadow.BackgroundTransparency = 1
-MinShadow.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-MinShadow.ImageColor3 = Color3.new(0, 0, 0)
-MinShadow.ImageTransparency = 0.7
-MinShadow.ZIndex = 49
-MinShadow.Parent = MinButton
+local MinGradient = Instance.new("UIGradient")
+MinGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 170)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 70, 150))
+}
+MinGradient.Rotation = 45
+MinGradient.Parent = MinButton
 
--- Frame principale (optimisée mobile - TAILLE RÉDUITE)
+-- Frame principale (AMÉLIORÉE - BIEN ALIGNÉE)
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 340, 0, 520)
-MainFrame.Position = UDim2.new(0.5, -170, 0.5, -260)
-MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+MainFrame.Size = UDim2.new(0, 360, 0, 540)
+MainFrame.Position = UDim2.new(0.5, -180, 0.5, -270)
+MainFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 20)
+MainCorner.CornerRadius = UDim.new(0, 22)
 MainCorner.Parent = MainFrame
 
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Color = Color3.fromRGB(255, 70, 150)
-MainStroke.Thickness = 2.5
+MainStroke.Thickness = 3
 MainStroke.Transparency = 0
 MainStroke.Parent = MainFrame
 
--- Header moderne (RÉDUIT)
+local MainGradient = Instance.new("UIGradient")
+MainGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 70, 150)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 150, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 70, 150))
+}
+MainGradient.Rotation = 45
+MainGradient.Parent = MainStroke
+
+-- Header moderne (BIEN ALIGNÉ)
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 50)
+Header.Size = UDim2.new(1, 0, 0, 55)
+Header.Position = UDim2.new(0, 0, 0, 0)
 Header.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
 Header.BorderSizePixel = 0
 Header.Parent = MainFrame
 
 local HeaderCorner = Instance.new("UICorner")
-HeaderCorner.CornerRadius = UDim.new(0, 20)
+HeaderCorner.CornerRadius = UDim.new(0, 22)
 HeaderCorner.Parent = Header
 
 local HeaderGradient = Instance.new("UIGradient")
@@ -235,10 +253,10 @@ HeaderGradient.Rotation = 90
 HeaderGradient.Parent = Header
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -120, 0, 25)
-Title.Position = UDim2.new(0, 15, 0, 5)
+Title.Size = UDim2.new(0, 180, 0, 24)
+Title.Position = UDim2.new(0, 18, 0, 8)
 Title.BackgroundTransparency = 1
-Title.Text = "📡 REMOTE SPY"
+Title.Text = "📡 REMOTE SPY PRO"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -246,25 +264,25 @@ Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
 local Subtitle = Instance.new("TextLabel")
-Subtitle.Size = UDim2.new(1, -120, 0, 18)
-Subtitle.Position = UDim2.new(0, 15, 0, 30)
+Subtitle.Size = UDim2.new(0, 180, 0, 16)
+Subtitle.Position = UDim2.new(0, 18, 0, 32)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Professional Edition"
-Subtitle.TextColor3 = Color3.fromRGB(150, 150, 160)
+Subtitle.Text = "Professional Edition V2"
+Subtitle.TextColor3 = Color3.fromRGB(150, 150, 170)
 Subtitle.TextSize = 9
 Subtitle.Font = Enum.Font.Gotham
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
 Subtitle.Parent = Header
 
 local StatusBadge = Instance.new("Frame")
-StatusBadge.Size = UDim2.new(0, 75, 0, 22)
-StatusBadge.Position = UDim2.new(1, -130, 0, 14)
+StatusBadge.Size = UDim2.new(0, 80, 0, 24)
+StatusBadge.Position = UDim2.new(1, -190, 0, 15.5)
 StatusBadge.BackgroundColor3 = Color3.fromRGB(60, 220, 120)
 StatusBadge.BorderSizePixel = 0
 StatusBadge.Parent = Header
 
 local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 11)
+StatusCorner.CornerRadius = UDim.new(0, 12)
 StatusCorner.Parent = StatusBadge
 
 local StatusLabel = Instance.new("TextLabel")
@@ -272,112 +290,95 @@ StatusLabel.Size = UDim2.new(1, 0, 1, 0)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = "● ACTIVE"
 StatusLabel.TextColor3 = Color3.new(1, 1, 1)
-StatusLabel.TextSize = 10
+StatusLabel.TextSize = 11
 StatusLabel.Font = Enum.Font.GothamBold
 StatusLabel.Parent = StatusBadge
 
-local HideBtn = Instance.new("TextButton")
-HideBtn.Size = UDim2.new(0, 38, 0, 38)
-HideBtn.Position = UDim2.new(1, -44, 0, 6)
-HideBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-HideBtn.BorderSizePixel = 0
-HideBtn.Text = "─"
-HideBtn.TextColor3 = Color3.new(1, 1, 1)
-HideBtn.TextSize = 18
-HideBtn.Font = Enum.Font.GothamBold
-HideBtn.Parent = Header
+-- Boutons Header (ALIGNÉS)
+local function createHeaderButton(text, position, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 40, 0, 40)
+    btn.Position = position
+    btn.BackgroundColor3 = color
+    btn.BorderSizePixel = 0
+    btn.Text = text
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.TextSize = 18
+    btn.Font = Enum.Font.GothamBold
+    btn.Parent = Header
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = btn
+    
+    return btn
+end
 
-local HideCorner = Instance.new("UICorner")
-HideCorner.CornerRadius = UDim.new(0, 10)
-HideCorner.Parent = HideBtn
+local HideBtn = createHeaderButton("—", UDim2.new(1, -95, 0, 7.5), Color3.fromRGB(60, 60, 75))
+local BlockedListBtn = createHeaderButton("🚫", UDim2.new(1, -50, 0, 7.5), Color3.fromRGB(220, 70, 70))
 
--- Compteur moderne (COMPACT)
-local CounterFrame = Instance.new("Frame")
-CounterFrame.Size = UDim2.new(1, -20, 0, 35)
-CounterFrame.Position = UDim2.new(0, 10, 0, 58)
-CounterFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
-CounterFrame.BorderSizePixel = 0
-CounterFrame.Parent = MainFrame
-
-local CounterCorner = Instance.new("UICorner")
-CounterCorner.CornerRadius = UDim.new(0, 10)
-CounterCorner.Parent = CounterFrame
-
-local CounterIcon = Instance.new("TextLabel")
-CounterIcon.Size = UDim2.new(0, 35, 1, 0)
-CounterIcon.BackgroundTransparency = 1
-CounterIcon.Text = "📊"
-CounterIcon.TextSize = 16
-CounterIcon.Parent = CounterFrame
-
-local CounterLabel = Instance.new("TextLabel")
-CounterLabel.Size = UDim2.new(1, -40, 1, 0)
-CounterLabel.Position = UDim2.new(0, 38, 0, 0)
-CounterLabel.BackgroundTransparency = 1
-CounterLabel.Text = "0 Remotes Captured"
-CounterLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
-CounterLabel.TextSize = 13
-CounterLabel.Font = Enum.Font.GothamBold
-CounterLabel.TextXAlignment = Enum.TextXAlignment.Left
-CounterLabel.Parent = CounterFrame
-
--- Barre de recherche moderne (COMPACT)
+-- Barre de recherche (ALIGNÉE)
 local SearchFrame = Instance.new("Frame")
-SearchFrame.Size = UDim2.new(1, -20, 0, 35)
-SearchFrame.Position = UDim2.new(0, 10, 0, 100)
+SearchFrame.Size = UDim2.new(1, -30, 0, 40)
+SearchFrame.Position = UDim2.new(0, 15, 0, 65)
 SearchFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
 SearchFrame.BorderSizePixel = 0
 SearchFrame.Parent = MainFrame
 
 local SearchCorner = Instance.new("UICorner")
-SearchCorner.CornerRadius = UDim.new(0, 10)
+SearchCorner.CornerRadius = UDim.new(0, 12)
 SearchCorner.Parent = SearchFrame
 
 local SearchIcon = Instance.new("TextLabel")
 SearchIcon.Size = UDim2.new(0, 35, 1, 0)
+SearchIcon.Position = UDim2.new(0, 5, 0, 0)
 SearchIcon.BackgroundTransparency = 1
 SearchIcon.Text = "🔍"
 SearchIcon.TextSize = 14
 SearchIcon.Parent = SearchFrame
 
 local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -100, 1, -8)
-SearchBox.Position = UDim2.new(0, 38, 0, 4)
+SearchBox.Size = UDim2.new(1, -75, 1, 0)
+SearchBox.Position = UDim2.new(0, 40, 0, 0)
 SearchBox.BackgroundTransparency = 1
-SearchBox.PlaceholderText = "Search remotes..."
-SearchBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
 SearchBox.Text = ""
+SearchBox.PlaceholderText = "Search remotes..."
 SearchBox.TextColor3 = Color3.new(1, 1, 1)
-SearchBox.TextSize = 11
+SearchBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
+SearchBox.TextSize = 13
 SearchBox.Font = Enum.Font.Gotham
 SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-SearchBox.ClearTextOnFocus = false
 SearchBox.Parent = SearchFrame
 
 local ClearSearchBtn = Instance.new("TextButton")
-ClearSearchBtn.Size = UDim2.new(0, 25, 0, 25)
-ClearSearchBtn.Position = UDim2.new(1, -32, 0.5, -12.5)
-ClearSearchBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+ClearSearchBtn.Size = UDim2.new(0, 30, 0, 30)
+ClearSearchBtn.Position = UDim2.new(1, -35, 0.5, -15)
 ClearSearchBtn.BackgroundTransparency = 1
 ClearSearchBtn.BorderSizePixel = 0
 ClearSearchBtn.Text = "✕"
 ClearSearchBtn.TextColor3 = Color3.fromRGB(200, 60, 60)
-ClearSearchBtn.TextSize = 14
+ClearSearchBtn.TextSize = 16
 ClearSearchBtn.Font = Enum.Font.GothamBold
 ClearSearchBtn.Visible = false
 ClearSearchBtn.Parent = SearchFrame
 
--- Filtres modernes (COMPACT)
+-- Filtres (ALIGNÉS)
 local FilterContainer = Instance.new("Frame")
-FilterContainer.Size = UDim2.new(1, -20, 0, 32)
-FilterContainer.Position = UDim2.new(0, 10, 0, 142)
+FilterContainer.Size = UDim2.new(1, -30, 0, 35)
+FilterContainer.Position = UDim2.new(0, 15, 0, 115)
 FilterContainer.BackgroundTransparency = 1
 FilterContainer.Parent = MainFrame
 
-local function createFilterButton(text, position, isActive)
+local FilterLayout = Instance.new("UIListLayout")
+FilterLayout.FillDirection = Enum.FillDirection.Horizontal
+FilterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+FilterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+FilterLayout.Padding = UDim.new(0, 8)
+FilterLayout.Parent = FilterContainer
+
+local function createFilterButton(text, isActive)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.31, 0, 1, 0)
-    btn.Position = position
+    btn.Size = UDim2.new(0.31, -6, 1, 0)
     btn.BackgroundColor3 = isActive and Color3.fromRGB(255, 70, 150) or Color3.fromRGB(35, 35, 45)
     btn.BorderSizePixel = 0
     btn.Text = text
@@ -390,28 +391,40 @@ local function createFilterButton(text, position, isActive)
     corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = btn
     
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = isActive and Color3.fromRGB(255, 100, 170) or Color3.fromRGB(50, 50, 60)
+    stroke.Thickness = isActive and 2 or 1
+    stroke.Transparency = 0.3
+    stroke.Parent = btn
+    
     return btn
 end
 
-local FilterAllBtn = createFilterButton("ALL", UDim2.new(0, 0, 0, 0), true)
-local FilterEventBtn = createFilterButton("EVENTS", UDim2.new(0.345, 0, 0, 0), false)
-local FilterFuncBtn = createFilterButton("FUNCTIONS", UDim2.new(0.69, 0, 0, 0), false)
+local FilterAllBtn = createFilterButton("ALL", true)
+local FilterEventBtn = createFilterButton("EVENTS", false)
+local FilterFuncBtn = createFilterButton("FUNCTIONS", false)
 
--- Liste de remotes (scroll optimisé - COMPACT)
+-- Liste de remotes (ALIGNÉE)
 local RemoteList = Instance.new("ScrollingFrame")
-RemoteList.Size = UDim2.new(1, -20, 0, 200)
-RemoteList.Position = UDim2.new(0, 10, 0, 182)
+RemoteList.Size = UDim2.new(1, -30, 0, 200)
+RemoteList.Position = UDim2.new(0, 15, 0, 160)
 RemoteList.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 RemoteList.BorderSizePixel = 0
-RemoteList.ScrollBarThickness = 4
+RemoteList.ScrollBarThickness = 5
 RemoteList.ScrollBarImageColor3 = Color3.fromRGB(255, 70, 150)
 RemoteList.CanvasSize = UDim2.new(0, 0, 0, 0)
 RemoteList.ScrollingDirection = Enum.ScrollingDirection.Y
 RemoteList.Parent = MainFrame
 
 local ListCorner = Instance.new("UICorner")
-ListCorner.CornerRadius = UDim.new(0, 12)
+ListCorner.CornerRadius = UDim.new(0, 13)
 ListCorner.Parent = RemoteList
+
+local ListStroke = Instance.new("UIStroke")
+ListStroke.Color = Color3.fromRGB(50, 50, 60)
+ListStroke.Thickness = 1
+ListStroke.Transparency = 0.5
+ListStroke.Parent = RemoteList
 
 local ListLayout = Instance.new("UIListLayout")
 ListLayout.Padding = UDim.new(0, 8)
@@ -419,71 +432,91 @@ ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 ListLayout.Parent = RemoteList
 
--- Panel de détails moderne (COMPACT)
+-- Panel de détails (ALIGNÉ)
 local DetailsPanel = Instance.new("ScrollingFrame")
-DetailsPanel.Size = UDim2.new(1, -20, 0, 100)
-DetailsPanel.Position = UDim2.new(0, 10, 0, 390)
+DetailsPanel.Size = UDim2.new(1, -30, 0, 90)
+DetailsPanel.Position = UDim2.new(0, 15, 0, 370)
 DetailsPanel.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
 DetailsPanel.BorderSizePixel = 0
-DetailsPanel.ScrollBarThickness = 4
+DetailsPanel.ScrollBarThickness = 5
 DetailsPanel.ScrollBarImageColor3 = Color3.fromRGB(255, 70, 150)
 DetailsPanel.CanvasSize = UDim2.new(0, 0, 0, 0)
 DetailsPanel.Parent = MainFrame
 
 local DetailsCorner = Instance.new("UICorner")
-DetailsCorner.CornerRadius = UDim.new(0, 12)
+DetailsCorner.CornerRadius = UDim.new(0, 13)
 DetailsCorner.Parent = DetailsPanel
+
+local DetailsStroke = Instance.new("UIStroke")
+DetailsStroke.Color = Color3.fromRGB(50, 50, 60)
+DetailsStroke.Thickness = 1
+DetailsStroke.Transparency = 0.5
+DetailsStroke.Parent = DetailsPanel
 
 local DetailsText = Instance.new("TextLabel")
 DetailsText.Size = UDim2.new(1, -20, 1, 0)
 DetailsText.Position = UDim2.new(0, 10, 0, 10)
 DetailsText.BackgroundTransparency = 1
-DetailsText.Text = "💡 Select a remote\n▶️ Replay | ✏️ Edit"
+DetailsText.Text = "💡 Select a remote to view details\n▶️ Replay | ✏️ Edit | 🚫 Block"
 DetailsText.TextColor3 = Color3.fromRGB(160, 160, 180)
-DetailsText.TextSize = 10
+DetailsText.TextSize = 11
 DetailsText.Font = Enum.Font.Code
 DetailsText.TextWrapped = true
 DetailsText.TextXAlignment = Enum.TextXAlignment.Left
 DetailsText.TextYAlignment = Enum.TextYAlignment.Top
 DetailsText.Parent = DetailsPanel
 
--- Boutons d'action (COMPACT)
+-- Boutons d'action (ALIGNÉS - 2 LIGNES)
 local ActionContainer = Instance.new("Frame")
-ActionContainer.Size = UDim2.new(1, -20, 0, 70)
-ActionContainer.Position = UDim2.new(0, 10, 0, 498)
+ActionContainer.Size = UDim2.new(1, -30, 0, 70)
+ActionContainer.Position = UDim2.new(0, 15, 1, -80)
 ActionContainer.BackgroundTransparency = 1
 ActionContainer.Parent = MainFrame
 
-local function createActionButton(text, emoji, position, color)
+local ActionLayout = Instance.new("UIGridLayout")
+ActionLayout.CellSize = UDim2.new(0.485, 0, 0, 32)
+ActionLayout.CellPadding = UDim2.new(0.03, 0, 0, 6)
+ActionLayout.FillDirection = Enum.FillDirection.Horizontal
+ActionLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+ActionLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+ActionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ActionLayout.Parent = ActionContainer
+
+local function createActionButton(text, emoji, color, order)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.48, 0, 0, 32)
-    btn.Position = position
     btn.BackgroundColor3 = color
     btn.BorderSizePixel = 0
     btn.Text = ""
     btn.Font = Enum.Font.GothamBold
     btn.AutoButtonColor = false
+    btn.LayoutOrder = order
     btn.Parent = ActionContainer
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 8)
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = btn
     
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.new(1, 1, 1)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.8
+    stroke.Parent = btn
+    
     local emojiLabel = Instance.new("TextLabel")
-    emojiLabel.Size = UDim2.new(0, 25, 1, 0)
+    emojiLabel.Size = UDim2.new(0, 28, 1, 0)
     emojiLabel.Position = UDim2.new(0, 8, 0, 0)
     emojiLabel.BackgroundTransparency = 1
     emojiLabel.Text = emoji
-    emojiLabel.TextSize = 14
+    emojiLabel.TextSize = 16
     emojiLabel.Parent = btn
     
     local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, -38, 1, 0)
-    textLabel.Position = UDim2.new(0, 33, 0, 0)
+    textLabel.Size = UDim2.new(1, -40, 1, 0)
+    textLabel.Position = UDim2.new(0, 36, 0, 0)
     textLabel.BackgroundTransparency = 1
     textLabel.Text = text
     textLabel.TextColor3 = Color3.new(1, 1, 1)
-    textLabel.TextSize = 11
+    textLabel.TextSize = 12
     textLabel.Font = Enum.Font.GothamBold
     textLabel.TextXAlignment = Enum.TextXAlignment.Left
     textLabel.Parent = btn
@@ -491,16 +524,17 @@ local function createActionButton(text, emoji, position, color)
     return btn
 end
 
-local ReplayBtn = createActionButton("REPLAY", "▶️", UDim2.new(0, 0, 0, 0), Color3.fromRGB(100, 150, 255))
-local EditBtn = createActionButton("EDIT", "✏️", UDim2.new(0.52, 0, 0, 0), Color3.fromRGB(255, 180, 50))
-local CaptureBtn = createActionButton("PAUSE", "⏸️", UDim2.new(0, 0, 0, 38), Color3.fromRGB(60, 200, 120))
-local ClearBtn = createActionButton("CLEAR", "🗑️", UDim2.new(0.52, 0, 0, 38), Color3.fromRGB(220, 70, 70))
+local ReplayBtn = createActionButton("REPLAY", "▶️", Color3.fromRGB(100, 150, 255), 1)
+local EditBtn = createActionButton("EDIT", "✏️", Color3.fromRGB(255, 180, 50), 2)
+local BlockBtn = createActionButton("BLOCK", "🚫", Color3.fromRGB(220, 70, 70), 3)
+local CaptureBtn = createActionButton("PAUSE", "⏸️", Color3.fromRGB(60, 200, 120), 4)
+local ClearBtn = createActionButton("CLEAR", "🗑️", Color3.fromRGB(180, 60, 100), 5)
 
--- Modal Edit (moderne)
+-- Modal Edit (AMÉLIORÉ)
 local EditModal = Instance.new("Frame")
 EditModal.Size = UDim2.new(1, 0, 1, 0)
 EditModal.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-EditModal.BackgroundTransparency = 0.6
+EditModal.BackgroundTransparency = 0.5
 EditModal.BorderSizePixel = 0
 EditModal.Visible = false
 EditModal.ZIndex = 100
@@ -517,6 +551,11 @@ EditFrame.Parent = EditModal
 local EditFrameCorner = Instance.new("UICorner")
 EditFrameCorner.CornerRadius = UDim.new(0, 16)
 EditFrameCorner.Parent = EditFrame
+
+local EditFrameStroke = Instance.new("UIStroke")
+EditFrameStroke.Color = Color3.fromRGB(255, 180, 50)
+EditFrameStroke.Thickness = 2
+EditFrameStroke.Parent = EditFrame
 
 local EditHeader = Instance.new("Frame")
 EditHeader.Size = UDim2.new(1, 0, 0, 50)
@@ -611,23 +650,119 @@ local EditSaveCorner = Instance.new("UICorner")
 EditSaveCorner.CornerRadius = UDim.new(0, 10)
 EditSaveCorner.Parent = EditSaveBtn
 
--- === FONCTIONS PRINCIPALES ===
+-- MODAL BLOCKED LIST (NOUVEAU)
+local BlockedModal = Instance.new("Frame")
+BlockedModal.Size = UDim2.new(1, 0, 1, 0)
+BlockedModal.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BlockedModal.BackgroundTransparency = 0.5
+BlockedModal.BorderSizePixel = 0
+BlockedModal.Visible = false
+BlockedModal.ZIndex = 100
+BlockedModal.Parent = MainFrame
 
-local function updateCounter()
-    local filtered = 0
-    for _, entry in ipairs(remoteLog) do
-        if (filterType == "All" or entry.type == filterType) and
-           (filterText == "" or string.find(string.lower(entry.name), string.lower(filterText))) then
-            filtered = filtered + 1
-        end
-    end
-    
-    if filtered ~= #remoteLog then
-        CounterLabel.Text = string.format("%d/%d Remotes", filtered, #remoteLog)
-    else
-        CounterLabel.Text = string.format("%d Remotes", #remoteLog)
-    end
-end
+local BlockedFrame = Instance.new("Frame")
+BlockedFrame.Size = UDim2.new(0.92, 0, 0.7, 0)
+BlockedFrame.Position = UDim2.new(0.04, 0, 0.15, 0)
+BlockedFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+BlockedFrame.BorderSizePixel = 0
+BlockedFrame.ZIndex = 101
+BlockedFrame.Parent = BlockedModal
+
+local BlockedFrameCorner = Instance.new("UICorner")
+BlockedFrameCorner.CornerRadius = UDim.new(0, 16)
+BlockedFrameCorner.Parent = BlockedFrame
+
+local BlockedFrameStroke = Instance.new("UIStroke")
+BlockedFrameStroke.Color = Color3.fromRGB(220, 70, 70)
+BlockedFrameStroke.Thickness = 2
+BlockedFrameStroke.Parent = BlockedFrame
+
+local BlockedHeader = Instance.new("Frame")
+BlockedHeader.Size = UDim2.new(1, 0, 0, 50)
+BlockedHeader.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+BlockedHeader.BorderSizePixel = 0
+BlockedHeader.ZIndex = 101
+BlockedHeader.Parent = BlockedFrame
+
+local BlockedHeaderCorner = Instance.new("UICorner")
+BlockedHeaderCorner.CornerRadius = UDim.new(0, 16)
+BlockedHeaderCorner.Parent = BlockedHeader
+
+local BlockedTitle = Instance.new("TextLabel")
+BlockedTitle.Size = UDim2.new(1, -60, 1, 0)
+BlockedTitle.Position = UDim2.new(0, 15, 0, 0)
+BlockedTitle.BackgroundTransparency = 1
+BlockedTitle.Text = "🚫 Blocked Remotes List"
+BlockedTitle.TextColor3 = Color3.fromRGB(220, 70, 70)
+BlockedTitle.TextSize = 18
+BlockedTitle.Font = Enum.Font.GothamBold
+BlockedTitle.TextXAlignment = Enum.TextXAlignment.Left
+BlockedTitle.ZIndex = 101
+BlockedTitle.Parent = BlockedHeader
+
+local BlockedCloseBtn = Instance.new("TextButton")
+BlockedCloseBtn.Size = UDim2.new(0, 40, 0, 40)
+BlockedCloseBtn.Position = UDim2.new(1, -45, 0, 5)
+BlockedCloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+BlockedCloseBtn.BorderSizePixel = 0
+BlockedCloseBtn.Text = "✕"
+BlockedCloseBtn.TextColor3 = Color3.new(1, 1, 1)
+BlockedCloseBtn.TextSize = 18
+BlockedCloseBtn.Font = Enum.Font.GothamBold
+BlockedCloseBtn.ZIndex = 101
+BlockedCloseBtn.Parent = BlockedHeader
+
+local BlockedCloseBtnCorner = Instance.new("UICorner")
+BlockedCloseBtnCorner.CornerRadius = UDim.new(0, 8)
+BlockedCloseBtnCorner.Parent = BlockedCloseBtn
+
+local BlockedInfo = Instance.new("TextLabel")
+BlockedInfo.Size = UDim2.new(1, -20, 0, 35)
+BlockedInfo.Position = UDim2.new(0, 10, 0, 60)
+BlockedInfo.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
+BlockedInfo.BorderSizePixel = 0
+BlockedInfo.Text = "💡 Blocked remotes won't appear in the list"
+BlockedInfo.TextColor3 = Color3.new(1, 1, 1)
+BlockedInfo.TextSize = 11
+BlockedInfo.Font = Enum.Font.Gotham
+BlockedInfo.TextWrapped = true
+BlockedInfo.ZIndex = 101
+BlockedInfo.Parent = BlockedFrame
+
+local BlockedInfoCorner = Instance.new("UICorner")
+BlockedInfoCorner.CornerRadius = UDim.new(0, 8)
+BlockedInfoCorner.Parent = BlockedInfo
+
+local BlockedList = Instance.new("ScrollingFrame")
+BlockedList.Size = UDim2.new(1, -20, 1, -160)
+BlockedList.Position = UDim2.new(0, 10, 0, 105)
+BlockedList.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+BlockedList.BorderSizePixel = 0
+BlockedList.ScrollBarThickness = 4
+BlockedList.ZIndex = 101
+BlockedList.Parent = BlockedFrame
+
+local BlockedListLayout = Instance.new("UIListLayout")
+BlockedListLayout.Padding = UDim.new(0, 5)
+BlockedListLayout.Parent = BlockedList
+
+local ClearAllBlockedBtn = Instance.new("TextButton")
+ClearAllBlockedBtn.Size = UDim2.new(1, -20, 0, 40)
+ClearAllBlockedBtn.Position = UDim2.new(0, 10, 1, -50)
+ClearAllBlockedBtn.BackgroundColor3 = Color3.fromRGB(220, 70, 70)
+ClearAllBlockedBtn.BorderSizePixel = 0
+ClearAllBlockedBtn.Text = "🗑️ UNBLOCK ALL REMOTES"
+ClearAllBlockedBtn.TextColor3 = Color3.new(1, 1, 1)
+ClearAllBlockedBtn.TextSize = 14
+ClearAllBlockedBtn.Font = Enum.Font.GothamBold
+ClearAllBlockedBtn.ZIndex = 101
+ClearAllBlockedBtn.Parent = BlockedFrame
+
+local ClearAllBlockedCorner = Instance.new("UICorner")
+ClearAllBlockedCorner.CornerRadius = UDim.new(0, 10)
+ClearAllBlockedCorner.Parent = ClearAllBlockedBtn
+
+-- === LOGIQUE FONCTIONNELLE (VOTRE CODE ORIGINAL) ===
 
 local function formatArgs(args)
     if not args or #args == 0 then return "No arguments" end
@@ -641,7 +776,7 @@ end
 local function parseEditedArgs(text)
     local args = {}
     for line in string.gmatch(text, "[^\n]+") do
-        local match = string.match(line, "%[%d+%]%s*(.+)")
+        local match = string.match(line, "%%[%d+%]%s*(.+)")
         if match then
             local num = tonumber(match)
             if num then
@@ -664,7 +799,6 @@ local function parseEditedArgs(text)
     return args
 end
 
--- FONCTION REPLAY AMÉLIORÉE (FIXÉE)
 local function fireRemote(entry, customArgs)
     if not entry then 
         showNotification("❌ No entry selected", Color3.fromRGB(220, 70, 70), 2)
@@ -694,49 +828,86 @@ local function fireRemote(entry, customArgs)
     end)
     
     if success then
-        showNotification("✅ " .. entry.name .. " fired!", Color3.fromRGB(60, 200, 120), 2)
-        return true
+        showNotification("✅ Remote fired successfully!", Color3.fromRGB(60, 200, 120), 2)
     else
-        showNotification("❌ Error: " .. tostring(result):sub(1, 50), Color3.fromRGB(220, 70, 70), 3)
-        return false
+        showNotification("❌ Error: " .. tostring(result), Color3.fromRGB(220, 70, 70), 3)
     end
+    return success
 end
 
-local function refreshList()
-    for _, child in ipairs(RemoteList:GetChildren()) do
-        if child:IsA("Frame") then
-            child:Destroy()
-        end
+local function updateCounter()
+    local count = 0
+    for _ in pairs(blockedRemotes) do count = count + 1 end
+    Subtitle.Text = string.format("Professional Edition V2 • %d Logs • %d Blocked", #remoteLog, count)
+end
+
+local function refreshBlockedList()
+    for _, child in ipairs(BlockedList:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
     end
     
-    for _, entry in ipairs(remoteLog) do
-        if (filterType == "All" or entry.type == filterType) and
-           (filterText == "" or string.find(string.lower(entry.name), string.lower(filterText))) then
-            pcall(createRemoteItemUI, entry.name, entry.type, entry.path, entry)
-        end
+    for path, name in pairs(blockedRemotes) do
+        local item = Instance.new("Frame")
+        item.Size = UDim2.new(1, 0, 0, 35)
+        item.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        item.BorderSizePixel = 0
+        item.Parent = BlockedList
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)
+        corner.Parent = item
+        
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -45, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Text = name
+        label.TextColor3 = Color3.new(1, 1, 1)
+        label.TextSize = 11
+        label.Font = Enum.Font.Gotham
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.TextTruncate = Enum.TextTruncate.AtEnd
+        label.Parent = item
+        
+        local unblock = Instance.new("TextButton")
+        unblock.Size = UDim2.new(0, 30, 0, 25)
+        unblock.Position = UDim2.new(1, -35, 0.5, -12.5)
+        unblock.BackgroundColor3 = Color3.fromRGB(60, 200, 120)
+        unblock.Text = "✓"
+        unblock.TextColor3 = Color3.new(1, 1, 1)
+        unblock.Parent = item
+        
+        local uCorner = Instance.new("UICorner")
+        uCorner.CornerRadius = UDim.new(0, 6)
+        uCorner.Parent = unblock
+        
+        unblock.MouseButton1Click:Connect(function()
+            blockedRemotes[path] = nil
+            refreshBlockedList()
+            updateCounter()
+        end)
     end
+    BlockedList.CanvasSize = UDim2.new(0, 0, 0, BlockedListLayout.AbsoluteContentSize.Y)
 end
 
--- Créer UI item moderne (COMPACT)
-function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
+local function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     local Item = Instance.new("Frame")
-    Item.Size = UDim2.new(1, -10, 0, 65)
+    Item.Size = UDim2.new(1, -12, 0, 68)
     Item.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
     Item.BorderSizePixel = 0
     Item.LayoutOrder = -math.floor(entry.time * 100)
     Item.Parent = RemoteList
     
     local ItemCorner = Instance.new("UICorner")
-    ItemCorner.CornerRadius = UDim.new(0, 12)
+    ItemCorner.CornerRadius = UDim.new(0, 13)
     ItemCorner.Parent = Item
     
     local ItemStroke = Instance.new("UIStroke")
     ItemStroke.Color = Color3.fromRGB(45, 45, 55)
     ItemStroke.Thickness = 1
-    ItemStroke.Transparency = 0.5
+    ItemStroke.Transparency = 0.4
     ItemStroke.Parent = Item
     
-    -- Highlight nouveau
     if config.enableNotifications and tick() - entry.time < 0.8 then
         ItemStroke.Color = Color3.fromRGB(255, 70, 150)
         ItemStroke.Thickness = 2
@@ -745,7 +916,7 @@ function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
             if Item and Item.Parent then
                 ItemStroke.Color = Color3.fromRGB(45, 45, 55)
                 ItemStroke.Thickness = 1
-                ItemStroke.Transparency = 0.5
+                ItemStroke.Transparency = 0.4
             end
         end)
     end
@@ -756,36 +927,27 @@ function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     ClickBtn.Text = ""
     ClickBtn.Parent = Item
     
-    local FavIcon = Instance.new("TextLabel")
-    FavIcon.Size = UDim2.new(0, 20, 0, 20)
-    FavIcon.Position = UDim2.new(0, 8, 0, 6)
-    FavIcon.BackgroundTransparency = 1
-    FavIcon.Text = favorites[remotePath] and "⭐" or "☆"
-    FavIcon.TextColor3 = favorites[remotePath] and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(100, 100, 120)
-    FavIcon.TextSize = 13
-    FavIcon.Parent = Item
-    
     local NameLabel = Instance.new("TextLabel")
-    NameLabel.Size = UDim2.new(1, -120, 0, 20)
-    NameLabel.Position = UDim2.new(0, 32, 0, 8)
+    NameLabel.Size = UDim2.new(1, -125, 0, 22)
+    NameLabel.Position = UDim2.new(0, 12, 0, 8)
     NameLabel.BackgroundTransparency = 1
     NameLabel.Text = remoteName
     NameLabel.TextColor3 = Color3.new(1, 1, 1)
-    NameLabel.TextSize = 12
+    NameLabel.TextSize = 13
     NameLabel.Font = Enum.Font.GothamBold
     NameLabel.TextXAlignment = Enum.TextXAlignment.Left
     NameLabel.TextTruncate = Enum.TextTruncate.AtEnd
     NameLabel.Parent = Item
     
     local TypeBadge = Instance.new("Frame")
-    TypeBadge.Size = UDim2.new(0, 55, 0, 20)
-    TypeBadge.Position = UDim2.new(1, -62, 0, 8)
+    TypeBadge.Size = UDim2.new(0, 58, 0, 22)
+    TypeBadge.Position = UDim2.new(1, -65, 0, 8)
     TypeBadge.BackgroundColor3 = remoteType == "Event" and Color3.fromRGB(70, 130, 255) or Color3.fromRGB(255, 140, 70)
     TypeBadge.BorderSizePixel = 0
     TypeBadge.Parent = Item
     
     local TypeCorner = Instance.new("UICorner")
-    TypeCorner.CornerRadius = UDim.new(0, 5)
+    TypeCorner.CornerRadius = UDim.new(0, 6)
     TypeCorner.Parent = TypeBadge
     
     local TypeLabel = Instance.new("TextLabel")
@@ -793,61 +955,66 @@ function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     TypeLabel.BackgroundTransparency = 1
     TypeLabel.Text = remoteType == "Event" and "EVENT" or "FUNC"
     TypeLabel.TextColor3 = Color3.new(1, 1, 1)
-    TypeLabel.TextSize = 9
+    TypeLabel.TextSize = 10
     TypeLabel.Font = Enum.Font.GothamBold
     TypeLabel.Parent = TypeBadge
     
     local PathLabel = Instance.new("TextLabel")
-    PathLabel.Size = UDim2.new(1, -45, 0, 14)
-    PathLabel.Position = UDim2.new(0, 32, 0, 29)
+    PathLabel.Size = UDim2.new(1, -48, 0, 15)
+    PathLabel.Position = UDim2.new(0, 12, 0, 32)
     PathLabel.BackgroundTransparency = 1
     PathLabel.Text = "📍 " .. remotePath
-    PathLabel.TextColor3 = Color3.fromRGB(130, 130, 150)
-    PathLabel.TextSize = 8
+    PathLabel.TextColor3 = Color3.fromRGB(130, 130, 155)
+    PathLabel.TextSize = 9
     PathLabel.Font = Enum.Font.Gotham
     PathLabel.TextXAlignment = Enum.TextXAlignment.Left
     PathLabel.TextTruncate = Enum.TextTruncate.AtEnd
     PathLabel.Parent = Item
     
     local TimeLabel = Instance.new("TextLabel")
-    TimeLabel.Size = UDim2.new(0, 80, 0, 14)
-    TimeLabel.Position = UDim2.new(0, 32, 0, 45)
+    TimeLabel.Size = UDim2.new(0, 85, 0, 15)
+    TimeLabel.Position = UDim2.new(0, 12, 0, 49)
     TimeLabel.BackgroundTransparency = 1
     TimeLabel.Text = "🕐 " .. os.date("%H:%M:%S", entry.time)
-    TimeLabel.TextColor3 = Color3.fromRGB(110, 110, 130)
-    TimeLabel.TextSize = 8
+    TimeLabel.TextColor3 = Color3.fromRGB(110, 110, 135)
+    TimeLabel.TextSize = 9
     TimeLabel.Font = Enum.Font.Gotham
     TimeLabel.TextXAlignment = Enum.TextXAlignment.Left
     TimeLabel.Parent = Item
     
     local ArgsCount = Instance.new("TextLabel")
-    ArgsCount.Size = UDim2.new(0, 70, 0, 14)
-    ArgsCount.Position = UDim2.new(0, 115, 0, 45)
+    ArgsCount.Size = UDim2.new(0, 75, 0, 15)
+    ArgsCount.Position = UDim2.new(0, 100, 0, 49)
     ArgsCount.BackgroundTransparency = 1
     ArgsCount.Text = "📦 " .. #entry.args .. " args"
-    ArgsCount.TextColor3 = Color3.fromRGB(110, 110, 130)
-    ArgsCount.TextSize = 8
+    ArgsCount.TextColor3 = Color3.fromRGB(110, 110, 135)
+    ArgsCount.TextSize = 9
     ArgsCount.Font = Enum.Font.Gotham
     ArgsCount.TextXAlignment = Enum.TextXAlignment.Left
     ArgsCount.Parent = Item
     
     local ReplayQuickBtn = Instance.new("TextButton")
-    ReplayQuickBtn.Size = UDim2.new(0, 28, 0, 28)
-    ReplayQuickBtn.Position = UDim2.new(1, -35, 0.5, -14)
+    ReplayQuickBtn.Size = UDim2.new(0, 32, 0, 32)
+    ReplayQuickBtn.Position = UDim2.new(1, -38, 0.5, -16)
     ReplayQuickBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
     ReplayQuickBtn.BorderSizePixel = 0
     ReplayQuickBtn.Text = "▶"
     ReplayQuickBtn.TextColor3 = Color3.new(1, 1, 1)
-    ReplayQuickBtn.TextSize = 12
+    ReplayQuickBtn.TextSize = 14
     ReplayQuickBtn.Font = Enum.Font.GothamBold
     ReplayQuickBtn.ZIndex = 2
     ReplayQuickBtn.Parent = Item
     
     local ReplayCorner = Instance.new("UICorner")
-    ReplayCorner.CornerRadius = UDim.new(0, 7)
+    ReplayCorner.CornerRadius = UDim.new(0, 8)
     ReplayCorner.Parent = ReplayQuickBtn
     
-    -- Events
+    local ReplayStroke = Instance.new("UIStroke")
+    ReplayStroke.Color = Color3.new(1, 1, 1)
+    ReplayStroke.Thickness = 1
+    ReplayStroke.Transparency = 0.8
+    ReplayStroke.Parent = ReplayQuickBtn
+    
     ReplayQuickBtn.MouseButton1Click:Connect(function()
         fireRemote(entry)
     end)
@@ -861,27 +1028,27 @@ function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
                 if stroke then
                     stroke.Color = Color3.fromRGB(45, 45, 55)
                     stroke.Thickness = 1
+                    stroke.Transparency = 0.4
                 end
             end
         end
         
         ItemStroke.Color = Color3.fromRGB(100, 150, 255)
         ItemStroke.Thickness = 2
+        ItemStroke.Transparency = 0
         
         local details = string.format(
-            "━━━━━━━━━━━━━━━━━━━━\n📋 REMOTE DETAILS\n━━━━━━━━━━━━━━━━━━━━\n\n" ..
+            "━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 REMOTE DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n" ..
             "🔹 Name: %s\n" ..
             "📦 Type: %s\n" ..
             "📍 Path: %s\n" ..
-            "🕐 Time: %s\n" ..
-            "⭐ Favorite: %s\n\n" ..
-            "━━━━━━━━━━━━━━━━━━━━\n📝 ARGUMENTS (%d)\n━━━━━━━━━━━━━━━━━━━━\n\n%s\n" ..
-            "━━━━━━━━━━━━━━━━━━━━\n💡 TIP: Use REPLAY or EDIT buttons",
+            "🕐 Time: %s\n\n" ..
+            "━━━━━━━━━━━━━━━━━━━━━━━━━\n📝 ARGUMENTS (%d)\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n%s\n" ..
+            "━━━━━━━━━━━━━━━━━━━━━━━━━\n💡 TIP: Use buttons below",
             entry.name, 
             entry.type, 
             entry.path,
             os.date("%H:%M:%S", entry.time),
-            favorites[entry.path] and "Yes" or "No",
             #entry.args,
             formatArgs(entry.args)
         )
@@ -893,7 +1060,19 @@ function createRemoteItemUI(remoteName, remoteType, remotePath, entry)
     RemoteList.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 10)
 end
 
--- Ajouter à la file
+local function refreshList()
+    for _, child in ipairs(RemoteList:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+    for _, entry in ipairs(remoteLog) do
+        if not blockedRemotes[entry.path] and
+           (filterType == "All" or entry.type == filterType) and
+           (filterText == "" or string.find(string.lower(entry.name), string.lower(filterText))) then
+            pcall(createRemoteItemUI, entry.name, entry.type, entry.path, entry)
+        end
+    end
+end
+
 local function queueRemoteCapture(remoteName, remoteType, args, remotePath, remoteObj)
     if blockedRemotes[remotePath] then return end
     
@@ -903,7 +1082,6 @@ local function queueRemoteCapture(remoteName, remoteType, args, remotePath, remo
         end
     end
     
-    -- STOCKER LE REMOTE OBJECT
     storeRemote(remotePath, remoteObj)
     
     local entry = {
@@ -923,18 +1101,17 @@ local function queueRemoteCapture(remoteName, remoteType, args, remotePath, remo
     updateCounter()
 end
 
--- Processeur de file
 RunService.Heartbeat:Connect(function()
     if #uiQueue > 0 then
         local data = table.remove(uiQueue, 1)
-        if (filterType == "All" or data[2] == filterType) and
+        if not blockedRemotes[data[3]] and
+           (filterType == "All" or data[2] == filterType) and
            (filterText == "" or string.find(string.lower(data[1]), string.lower(filterText))) then
             pcall(createRemoteItemUI, data[1], data[2], data[3], data[4])
         end
     end
 end)
 
--- === HOOK AMÉLIORÉ ===
 if hasHook then
     local oldNamecall
     oldNamecall = hookmetamethod(game, "__namecall", newCC(function(self, ...)
@@ -971,7 +1148,7 @@ local function toggleMinimize()
     MinButton.Visible = isMinimized
     
     if isMinimized then
-        showNotification("📡 Spy minimized", Color3.fromRGB(100, 100, 120), 1)
+        showNotification("📡 Spy minimized", Color3.fromRGB(100, 100, 120), 1.5)
     end
 end
 
@@ -1030,6 +1207,27 @@ EditBtn.MouseButton1Click:Connect(function()
     EditModal.Visible = true
 end)
 
+BlockBtn.MouseButton1Click:Connect(function()
+    if not selectedEntry then
+        showNotification("⚠️ Select a remote first!", Color3.fromRGB(255, 180, 50), 2)
+        return
+    end
+    
+    blockedRemotes[selectedEntry.path] = selectedEntry.name
+    
+    for _, child in ipairs(RemoteList:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
+        end
+    end
+    
+    refreshList()
+    updateCounter()
+    selectedEntry = nil
+    DetailsText.Text = "💡 Remote blocked!\n\n🚫 It won't appear anymore"
+    showNotification("🚫 Remote blocked from display!", Color3.fromRGB(220, 70, 70), 2)
+end)
+
 EditSaveBtn.MouseButton1Click:Connect(function()
     if not selectedEntry then return end
     
@@ -1048,7 +1246,23 @@ EditCloseBtn.MouseButton1Click:Connect(function()
     EditModal.Visible = false
 end)
 
--- Filters
+BlockedListBtn.MouseButton1Click:Connect(function()
+    refreshBlockedList()
+    BlockedModal.Visible = true
+end)
+
+BlockedCloseBtn.MouseButton1Click:Connect(function()
+    BlockedModal.Visible = false
+end)
+
+ClearAllBlockedBtn.MouseButton1Click:Connect(function()
+    blockedRemotes = {}
+    refreshBlockedList()
+    refreshList()
+    updateCounter()
+    showNotification("✅ All remotes unblocked!", Color3.fromRGB(60, 200, 120), 2)
+end)
+
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     filterText = SearchBox.Text
     ClearSearchBtn.Visible = filterText ~= ""
@@ -1064,34 +1278,41 @@ ClearSearchBtn.MouseButton1Click:Connect(function()
     updateCounter()
 end)
 
+local function updateFilterButtons(activeBtn)
+    for _, btn in ipairs({FilterAllBtn, FilterEventBtn, FilterFuncBtn}) do
+        if btn == activeBtn then
+            btn.BackgroundColor3 = Color3.fromRGB(255, 70, 150)
+            btn:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(255, 100, 170)
+            btn:FindFirstChildOfClass("UIStroke").Thickness = 2
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+            btn:FindFirstChildOfClass("UIStroke").Color = Color3.fromRGB(50, 50, 60)
+            btn:FindFirstChildOfClass("UIStroke").Thickness = 1
+        end
+    end
+end
+
 FilterAllBtn.MouseButton1Click:Connect(function()
     filterType = "All"
-    FilterAllBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 150)
-    FilterEventBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    FilterFuncBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    updateFilterButtons(FilterAllBtn)
     refreshList()
     updateCounter()
 end)
 
 FilterEventBtn.MouseButton1Click:Connect(function()
     filterType = "Event"
-    FilterAllBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    FilterEventBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 150)
-    FilterFuncBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    updateFilterButtons(FilterEventBtn)
     refreshList()
     updateCounter()
 end)
 
 FilterFuncBtn.MouseButton1Click:Connect(function()
     filterType = "Function"
-    FilterAllBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    FilterEventBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-    FilterFuncBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 150)
+    updateFilterButtons(FilterFuncBtn)
     refreshList()
     updateCounter()
 end)
 
--- Draggable (optimisé mobile)
 local function makeDraggable(frame, handle)
     local dragging = false
     local dragStart = nil
@@ -1127,46 +1348,14 @@ end
 makeDraggable(MainFrame, Header)
 makeDraggable(MinButton, MinButton)
 
--- Export si disponible (POSITION AJUSTÉE)
-if setclipboard then
-    local ExportBtn = Instance.new("TextButton")
-    ExportBtn.Size = UDim2.new(0, 30, 0, 30)
-    ExportBtn.Position = UDim2.new(1, -78, 0, 10)
-    ExportBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 255)
-    ExportBtn.BorderSizePixel = 0
-    ExportBtn.Text = "📋"
-    ExportBtn.TextSize = 13
-    ExportBtn.Font = Enum.Font.GothamBold
-    ExportBtn.Parent = Header
-    
-    local ExportCorner = Instance.new("UICorner")
-    ExportCorner.CornerRadius = UDim.new(0, 7)
-    ExportCorner.Parent = ExportBtn
-    
-    ExportBtn.MouseButton1Click:Connect(function()
-        local export = "=== REMOTE SPY EXPORT ===\n"
-        export = export .. string.format("Date: %s\n", os.date("%Y-%m-%d %H:%M:%S"))
-        export = export .. string.format("Total: %d remotes\n\n", #remoteLog)
-        
-        for i, entry in ipairs(remoteLog) do
-            export = export .. string.format("[%d] %s (%s)\n", i, entry.name, entry.type)
-            export = export .. string.format("    Path: %s\n", entry.path)
-            export = export .. string.format("    Time: %s\n", os.date("%H:%M:%S", entry.time))
-            export = export .. "    Args: " .. formatArgs(entry.args):gsub("\n", "\n    ") .. "\n\n"
-        end
-        
-        setclipboard(export)
-        showNotification("📋 Copied to clipboard!", Color3.fromRGB(150, 100, 255), 2)
-    end)
-end
-
--- Initialisation
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🔥 REMOTE SPY PRO - LOADED")
+print("🔥 REMOTE SPY PRO V2 - LOADED")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("✅ Hook: " .. (hasHook and "Active" or "Disabled"))
 print("✅ Max logs: " .. config.maxLogs)
-print("✅ Features: Replay, Edit, Filters")
+print("✅ Features: Replay, Edit, Block, Filters")
+print("✅ Interface: Optimized & Aligned")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-showNotification("🔥 Remote Spy PRO ready!", Color3.fromRGB(100, 255, 150), 2)
+showNotification("🔥 Remote Spy PRO V2 ready!", Color3.fromRGB(100, 255, 150), 2.5)
+updateCounter()
