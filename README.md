@@ -32,15 +32,7 @@
 - 🕐 **Timestamp Tracking** - Precise time logging for each call
 - ⚡ **Minimize Mode** - Compact floating button when minimized
 
-### 🔧 **Configuration**
-```lua
-config = {
-    maxLogs = 300,              -- Maximum stored logs
-    deduplicateTime = 0.05,     -- Duplicate filter window (seconds)
-    enableNotifications = true,  -- Toggle notifications
-    animationSpeed = 0.2        -- UI animation duration
-}
-```
+
 
 ---
 
@@ -80,10 +72,7 @@ config = {
 loadstring(game:HttpGet("YOUR_SCRIPT_URL"))()
 ```
 
-### Method 2: Local Script
-1. Copy the entire script content
-2. Paste into your executor
-3. Execute and enjoy!
+
 
 ---
 
@@ -144,11 +133,10 @@ loadstring(game:HttpGet("YOUR_SCRIPT_URL"))()
 ## 🛡️ Compatibility
 
 ### ✅ **Supported Executors**
-- Synapse X / Synapse Z
-- Script-Ware
-- KRNL
-- Fluxus
 - Any executor with `hookmetamethod` support
+- Fluxus Z
+- Bunni Executor
+- ...
 
 ### ⚠️ **Requirements**
 - `hookmetamethod` (essential for capturing)
@@ -163,38 +151,12 @@ loadstring(game:HttpGet("YOUR_SCRIPT_URL"))()
 
 ---
 
-## 🎨 Customization
 
-### Color Scheme
-```lua
--- Main accent color
-Color3.fromRGB(255, 70, 150)  -- Pink/Magenta
-
--- Secondary colors
-Color3.fromRGB(100, 150, 255)  -- Blue (Events)
-Color3.fromRGB(255, 140, 70)   -- Orange (Functions)
-Color3.fromRGB(60, 200, 120)   -- Green (Success)
-Color3.fromRGB(220, 70, 70)    -- Red (Block/Error)
-```
-
-### Modify Max Logs
-```lua
-config.maxLogs = 500  -- Increase capacity
-```
-
-### Disable Notifications
-```lua
-config.enableNotifications = false
-```
-
----
 
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to:
-- 🐛 Report bugs
-- 💡 Suggest features
-- 🔧 Submit pull requests
+
 - ⭐ Star the repository
 
 ---
@@ -247,15 +209,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you find this tool useful, please consider:
 - ⭐ Starring the repository
-- 🐛 Reporting issues
-- 💬 Sharing with others
-- 🤝 Contributing code
+
 
 ---
 
 <div align="center">
 
-### 🔥 Made with ❤️ for the Roblox Community
+### 🔥 Made with ❤️ for Skids
 
 **[⬆ Back to Top](#-remote-spy-v104)**
 
