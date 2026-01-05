@@ -69,7 +69,7 @@
 
 ### Method 1: Direct Execution
 ```lua
-loadstring(game:HttpGet("YOUR_SCRIPT_URL"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/nxthxndev/RemoteSpy/refs/heads/main/RemoteSpy.lua"))()
 ```
 
 
