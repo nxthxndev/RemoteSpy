@@ -1,8 +1,4 @@
--- 🔥 ULTIMATE MOBILE REMOTE SPY - PROFESSIONAL EDITION V2 (FIXED UI)
--- ✅ Replay fonctionnel avec stockage des remotes
--- ✅ Interface moderne et clean AMÉLIORÉE
--- ✅ Système de blocage d'affichage des remotes
--- ✅ 100% optimisé mobile avec alignement parfait
+
 
 local _hookmetamethod = hookmetamethod
 local _getnamecallmethod = getnamecallmethod
@@ -15,22 +11,22 @@ local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Services
+
 local LocalPlayer = Players.LocalPlayer
 
--- Parent GUI avec protection
+
 local GuiParent = (function()
     local success, coreGui = pcall(game.GetService, game, "CoreGui")
     return success and coreGui or LocalPlayer:WaitForChild("PlayerGui")
 end)()
 
--- Vérifications UNC
+
 local hasHook = hookmetamethod ~= nil
 local getNamecall = getnamecallmethod or function() return "" end
 local checkCaller = checkcaller or function() return false end
 local newCC = newcclosure or function(f) return f end
 
--- Variables globales
+
 local remoteLog = {}
 local remoteCache = {}
 local isCapturing = true
@@ -40,7 +36,7 @@ local uiQueue = {}
 local filterText = ""
 local filterType = "All"
 local favorites = {}
-local blockedRemotes = {} -- LISTE DES REMOTES BLOQUÉS
+local blockedRemotes = {}
 
 -- Configuration
 local config = {
@@ -50,7 +46,7 @@ local config = {
     animationSpeed = 0.2
 }
 
--- === UTILITAIRES ===
+
 local function safeStringify(value, depth)
     depth = depth or 0
     if depth > 2 then return "..." end
@@ -119,7 +115,7 @@ local function storeRemote(path, remote)
     end
 end
 
--- === CRÉATION UI ===
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RemoteSpy_" .. math.random(10000, 99999)
 ScreenGui.ResetOnSpawn = false
@@ -127,7 +123,7 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = GuiParent
 
--- Notification moderne
+
 local function showNotification(text, color, duration)
     if not config.enableNotifications then return end
     duration = duration or 2
@@ -183,7 +179,7 @@ local function showNotification(text, color, duration)
     end)
 end
 
--- Bouton minimisé (AMÉLIORÉ)
+
 local MinButton = Instance.new("TextButton")
 MinButton.Size = UDim2.new(0, 65, 0, 65)
 MinButton.Position = UDim2.new(0, 20, 0.5, -32.5)
@@ -237,7 +233,7 @@ MainGradient.Color = ColorSequence.new{
 MainGradient.Rotation = 45
 MainGradient.Parent = MainStroke
 
--- Header moderne (BIEN ALIGNÉ)
+
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 55)
 Header.Position = UDim2.new(0, 0, 0, 0)
@@ -299,7 +295,7 @@ StatusLabel.TextSize = 11
 StatusLabel.Font = Enum.Font.GothamBold
 StatusLabel.Parent = StatusBadge
 
--- Boutons Header (ALIGNÉS)
+
 local function createHeaderButton(text, position, color)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(0, 40, 0, 40)
@@ -322,7 +318,7 @@ end
 local HideBtn = createHeaderButton("—", UDim2.new(1, -95, 0, 7.5), Color3.fromRGB(60, 60, 75))
 local BlockedListBtn = createHeaderButton("🚫", UDim2.new(1, -50, 0, 7.5), Color3.fromRGB(220, 70, 70))
 
--- Barre de recherche (ALIGNÉE)
+
 local SearchFrame = Instance.new("Frame")
 SearchFrame.Size = UDim2.new(1, -30, 0, 40)
 SearchFrame.Position = UDim2.new(0, 15, 0, 65)
@@ -367,7 +363,7 @@ ClearSearchBtn.Font = Enum.Font.GothamBold
 ClearSearchBtn.Visible = false
 ClearSearchBtn.Parent = SearchFrame
 
--- Filtres (ALIGNÉS)
+
 local FilterContainer = Instance.new("Frame")
 FilterContainer.Size = UDim2.new(1, -30, 0, 35)
 FilterContainer.Position = UDim2.new(0, 15, 0, 115)
@@ -409,7 +405,7 @@ local FilterAllBtn = createFilterButton("ALL", true)
 local FilterEventBtn = createFilterButton("EVENTS", false)
 local FilterFuncBtn = createFilterButton("FUNCTIONS", false)
 
--- Liste de remotes (ALIGNÉE)
+
 local RemoteList = Instance.new("ScrollingFrame")
 RemoteList.Size = UDim2.new(1, -30, 0, 200)
 RemoteList.Position = UDim2.new(0, 15, 0, 160)
@@ -437,7 +433,7 @@ ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 ListLayout.Parent = RemoteList
 
--- Panel de détails (ALIGNÉ)
+
 local DetailsPanel = Instance.new("ScrollingFrame")
 DetailsPanel.Size = UDim2.new(1, -30, 0, 90)
 DetailsPanel.Position = UDim2.new(0, 15, 0, 370)
@@ -471,7 +467,7 @@ DetailsText.TextXAlignment = Enum.TextXAlignment.Left
 DetailsText.TextYAlignment = Enum.TextYAlignment.Top
 DetailsText.Parent = DetailsPanel
 
--- Boutons d'action (ALIGNÉS - 2 LIGNES)
+
 local ActionContainer = Instance.new("Frame")
 ActionContainer.Size = UDim2.new(1, -30, 0, 70)
 ActionContainer.Position = UDim2.new(0, 15, 1, -80)
@@ -535,7 +531,6 @@ local BlockBtn = createActionButton("BLOCK", "🚫", Color3.fromRGB(220, 70, 70)
 local CaptureBtn = createActionButton("PAUSE", "⏸️", Color3.fromRGB(60, 200, 120), 4)
 local ClearBtn = createActionButton("CLEAR", "🗑️", Color3.fromRGB(180, 60, 100), 5)
 
--- Modal Edit (AMÉLIORÉ)
 local EditModal = Instance.new("Frame")
 EditModal.Size = UDim2.new(1, 0, 1, 0)
 EditModal.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -655,7 +650,7 @@ local EditSaveCorner = Instance.new("UICorner")
 EditSaveCorner.CornerRadius = UDim.new(0, 10)
 EditSaveCorner.Parent = EditSaveBtn
 
--- MODAL BLOCKED LIST (NOUVEAU)
+
 local BlockedModal = Instance.new("Frame")
 BlockedModal.Size = UDim2.new(1, 0, 1, 0)
 BlockedModal.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -767,7 +762,7 @@ local ClearAllBlockedCorner = Instance.new("UICorner")
 ClearAllBlockedCorner.CornerRadius = UDim.new(0, 10)
 ClearAllBlockedCorner.Parent = ClearAllBlockedBtn
 
--- === LOGIQUE FONCTIONNELLE (VOTRE CODE ORIGINAL) ===
+
 
 local function formatArgs(args)
     if not args or #args == 0 then return "No arguments" end
@@ -843,7 +838,7 @@ end
 local function updateCounter()
     local count = 0
     for _ in pairs(blockedRemotes) do count = count + 1 end
-    Subtitle.Text = string.format("Professional Edition V2 • %d Logs • %d Blocked", #remoteLog, count)
+    Subtitle.Text = string.format("https://github.com/nxthxndev • %d Logs • %d Blocked", #remoteLog, count)
 end
 
 local function refreshBlockedList()
@@ -1127,7 +1122,7 @@ if hasHook then
         local method = _getnamecallmethod()
         local args = {...}
         
-        -- Capture asynchrone pour ne JAMAIS ralentir ou bloquer l'appel original
+        
         if not _checkcaller() and (method == "FireServer" or method == "InvokeServer") and isCapturing then
             task.spawn(function()
                 local rPath = ""
@@ -1140,14 +1135,14 @@ if hasHook then
             end)
         end
         
-        -- RETOUR IMMÉDIAT ET INTACT DE L'APPEL ORIGINAL
+        
         return oldNamecall(self, ...)
     end))
 else
     showNotification("⚠️ Hooking not supported", Color3.fromRGB(255, 180, 50), 3)
 end
 
--- === EVENTS UI ===
+
 
 local function toggleMinimize()
     isMinimized = not isMinimized
