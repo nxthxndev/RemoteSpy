@@ -4,6 +4,11 @@
 -- ✅ Système de blocage d'affichage des remotes
 -- ✅ 100% optimisé mobile avec alignement parfait
 
+local _hookmetamethod = hookmetamethod
+local _getnamecallmethod = getnamecallmethod
+local _checkcaller = checkcaller
+local _newcclosure = newcclosure
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
@@ -776,7 +781,7 @@ end
 local function parseEditedArgs(text)
     local args = {}
     for line in string.gmatch(text, "[^\n]+") do
-        local match = string.match(line, "%%[%d+%]%s*(.+)")
+        local match = string.match(line, "%%[%d+%]%s*(.+)") or string.match(line, "%[%d+%]%s*(.+)")
         if match then
             local num = tonumber(match)
             if num then
@@ -1075,6 +1080,10 @@ end
 
 local function queueRemoteCapture(remoteName, remoteType, args, remotePath, remoteObj)
     if blockedRemotes[remotePath] then return end
+    local lp = remotePath:lower()
+    if string.find(lp, "analytics") or string.find(lp, "telemetry") or string.find(lp, "bugreport") then return end
+    local lowerPath = remotePath:lower()
+    if string.find(lowerPath, "analytics") or string.find(lowerPath, "telemetry") or string.find(lowerPath, "bugreport") then return end
     
     for i = 1, math.min(3, #remoteLog) do
         if remoteLog[i] and remoteLog[i].path == remotePath and tick() - remoteLog[i].time < config.deduplicateTime then
@@ -1114,27 +1123,25 @@ end)
 
 if hasHook then
     local oldNamecall
-    oldNamecall = hookmetamethod(game, "__namecall", newCC(function(self, ...)
-        local method = getNamecall()
+    oldNamecall = _hookmetamethod(game, "__namecall", _newcclosure(function(self, ...)
+        local method = _getnamecallmethod()
         local args = {...}
         
-        if (method == "FireServer" or method == "InvokeServer") and not checkCaller() and isCapturing then
+        -- Capture asynchrone pour ne JAMAIS ralentir ou bloquer l'appel original
+        if not _checkcaller() and (method == "FireServer" or method == "InvokeServer") and isCapturing then
             task.spawn(function()
-                pcall(function()
+                local rPath = ""
+                local s, e = pcall(function() rPath = self:GetFullName() end)
+                if s and rPath ~= "" then
                     if self:IsA("RemoteEvent") or self:IsA("RemoteFunction") then
-                        local rType = self:IsA("RemoteEvent") and "Event" or "Function"
-                        local rName = tostring(self.Name)
-                        local rPath = ""
-                        pcall(function() rPath = self:GetFullName() end)
-                        if rPath == "" then rPath = tostring(self) end
-                        
-                        queueRemoteCapture(rName, rType, args, rPath, self)
+                        queueRemoteCapture(tostring(self.Name), self:IsA("RemoteEvent") and "Event" or "Function", args, rPath, self)
                     end
-                end)
+                end
             end)
         end
         
-        return oldNamecall(self, unpack(args))
+        -- RETOUR IMMÉDIAT ET INTACT DE L'APPEL ORIGINAL
+        return oldNamecall(self, ...)
     end))
 else
     showNotification("⚠️ Hooking not supported", Color3.fromRGB(255, 180, 50), 3)
