@@ -256,7 +256,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 180, 0, 24)
 Title.Position = UDim2.new(0, 18, 0, 8)
 Title.BackgroundTransparency = 1
-Title.Text = "📡 REMOTE SPY PRO"
+Title.Text = "📡 REMOTE SPY V1.0.4"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 Title.Font = Enum.Font.GothamBold
@@ -267,7 +267,7 @@ local Subtitle = Instance.new("TextLabel")
 Subtitle.Size = UDim2.new(0, 180, 0, 16)
 Subtitle.Position = UDim2.new(0, 18, 0, 32)
 Subtitle.BackgroundTransparency = 1
-Subtitle.Text = "Professional Edition V2"
+Subtitle.Text = "By Nxth9n"
 Subtitle.TextColor3 = Color3.fromRGB(150, 150, 170)
 Subtitle.TextSize = 9
 Subtitle.Font = Enum.Font.Gotham
@@ -1349,7 +1349,7 @@ makeDraggable(MainFrame, Header)
 makeDraggable(MinButton, MinButton)
 
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("🔥 REMOTE SPY PRO V2 - LOADED")
+print("🔥 REMOTESPY V 1.0.4 - LOADED")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 print("✅ Hook: " .. (hasHook and "Active" or "Disabled"))
 print("✅ Max logs: " .. config.maxLogs)
@@ -1357,5 +1357,5 @@ print("✅ Features: Replay, Edit, Block, Filters")
 print("✅ Interface: Optimized & Aligned")
 print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-showNotification("🔥 Remote Spy PRO V2 ready!", Color3.fromRGB(100, 255, 150), 2.5)
+showNotification("🔥 Remote Spy OK", Color3.fromRGB(100, 255, 150), 2.5)
 updateCounter()
