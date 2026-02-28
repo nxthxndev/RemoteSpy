@@ -153,14 +153,6 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/nxthxndev/RemoteSpy/r
 
 
 
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-
-- ⭐ Star the repository
-
----
-
 ## 📝 Changelog
 
 ### v1.0.4 (Current)
@@ -192,11 +184,7 @@ Contributions are welcome! Feel free to:
 
 ---
 
-## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
 
 ## 👨‍💻 Author
 
