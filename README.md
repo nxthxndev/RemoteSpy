@@ -3,7 +3,7 @@
 > **Advanced Remote Event/Function Monitor & Debugger for Roblox**
 
 [![Version](https://img.shields.io/badge/version-1.0.4-ff4696?style=for-the-badge)](https://github.com/nxthxndev)
-[![License](https://img.shields.io/badge/license-MIT-64c878?style=for-the-badge)](LICENSE)
+
 [![Status](https://img.shields.io/badge/status-active-64dc78?style=for-the-badge)](https://github.com/nxthxndev)
 
 ---
